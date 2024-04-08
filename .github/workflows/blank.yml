@@ -20,5 +20,3 @@ jobs:
         hosts: 'tw2mp_groupie-tracker@tw2mp.ftp.infomaniak.com'
         privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
         command: cd sites/groupie-tracker.vitrihome.fr/ && git pull
-
-        
