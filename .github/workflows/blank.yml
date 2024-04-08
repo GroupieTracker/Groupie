@@ -18,4 +18,4 @@ jobs:
       with:
         hosts: 'tw2mp_groupie-tracker@tw2mp.ftp.infomaniak.com'
         privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
-        command: echo "another before" && echo "$(whoami) $(pwd)" && cd /home/clients/3d62e274d4bb2700d62d1fdeef3668fc/sites/groupie-tracker.vitrihome.fr/ && echo "after" && git pull && echo "finish"
+        command: echo "another before" 
