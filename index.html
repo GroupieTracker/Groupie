@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Chat</title>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <input type="text" id="messageInput" placeholder="Entrez votre message">
@@ -12,7 +11,7 @@
     <ul id="messageList"></ul>
 
     <script>
-        var ws = new WebSocket("ws:https://groupie-tracker.vitrihome.fr/echo");
+        var ws = new WebSocket("wss://84.16.76.228:8080/echo"); // Remplacez 1.2.3.4 par votre adresse IP
 
         ws.onmessage = function(event) {
             var messageList = document.getElementById("messageList");
