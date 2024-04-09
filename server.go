@@ -63,14 +63,12 @@ func handleMessages() {
 	for {
 		// Récupérer le prochain message de la chaîne de diffusion
 		msg := <-broadcast
-		// Diffuser le message à tous les clients connectés
-		for client := range clients {
-			err := client.WriteJSON(msg)
-			if err != nil {
-				log.Printf("Erreur d'écriture du message: %v", err)
-				client.Close()          // Fermer la connexion en cas d'erreur
-				delete(clients, client) // Supprimer le client de la liste en cas d'erreur
-			}
-		}
+		// Générer le code HTML pour afficher le message
+		messageHTML := "<div>" + msg.Content + "</div>"
+		// Ajouter le message à une variable globale contenant tous les messages
+		allMessages += messageHTML
+		// Actualiser la page avec tous les messages
+		http.HandleFunc("/", handleRoot)
+		http.ListenAndServe(":8000", nil)
 	}
 }
