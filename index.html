@@ -3,33 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat en temps réel</title>
-    <link rel="stylesheet" href="style.css">
+    <title>WebSocket Chat</title>
 </head>
 <body>
     <input type="text" id="messageInput" placeholder="Entrez votre message">
     <button onclick="sendMessage()">Envoyer</button>
-    <ul id="messages"></ul>
+    <ul id="messageList"></ul>
 
-    <!-- Inclure le script pour Socket.io -->
-    <script src="script.js"></script>
     <script>
-        // Définir la variable socket
-        const socket = io();
+        var ws = new WebSocket("ws://localhost:8080/echo");
+
+        ws.onmessage = function(event) {
+            var messageList = document.getElementById("messageList");
+            var li = document.createElement("li");
+            li.textContent = event.data;
+            messageList.appendChild(li);
+        };
 
         function sendMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value;
-            socket.emit('message', message);
-            messageInput.value = '';
+            var messageInput = document.getElementById("messageInput");
+            var message = messageInput.value;
+            ws.send(message);
+            messageInput.value = "";
         }
-
-        socket.on('message', (message) => {
-            const messagesList = document.getElementById('messages');
-            const messageItem = document.createElement('li');
-            messageItem.textContent = message;
-            messagesList.appendChild(messageItem);
-        });
     </script>
 </body>
 </html>
