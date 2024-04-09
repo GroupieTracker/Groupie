@@ -24,7 +24,7 @@ func echoHandler(w http.ResponseWriter, r *http.Request) {
         log.Println(err)
         return
     }
-    defer conn.Close()
+   // defer conn.Close()
 
     // Ajoute la connexion à la liste des connexions
     mutex.Lock()
