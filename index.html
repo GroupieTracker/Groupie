@@ -11,13 +11,13 @@
     <ul id="messageList"></ul>
 
     <script>
-        var ws = new WebSocket("wss://groupie-tracker.vitrihome.fr/echo");
-
-        ws.onopen = function(event) {
+        var wss = new WebSocket("wss://groupie-tracker.vitrihome.fr/echo");
+        console.log(ws);
+        wss.onopen = function(event) {
             console.log("Connexion établie.");
         };
 
-        ws.onmessage = function(event) {
+        wss.onmessage = function(event) {
             var messageList = document.getElementById("messageList");
             var li = document.createElement("li");
             li.textContent = event.data;
@@ -27,8 +27,8 @@
         function sendMessage() {
             var messageInput = document.getElementById("messageInput");
             var message = messageInput.value;
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(message);
+            if (wss.readyState === WebSocket.OPEN) {
+                wss.send(message);
                 messageInput.value = "";
             } else {
                 console.log("La connexion n'est pas encore établie.");
