@@ -11,7 +11,11 @@
     <ul id="messageList"></ul>
 
     <script>
-        var ws = new WebSocket("wss://84.16.76.228:8080/echo"); // Remplacez 1.2.3.4 par votre adresse IP
+        var ws = new WebSocket("wss://groupie-tracker.vitrihome.fr/echo");
+
+        ws.onopen = function(event) {
+            console.log("Connexion établie.");
+        };
 
         ws.onmessage = function(event) {
             var messageList = document.getElementById("messageList");
@@ -23,8 +27,12 @@
         function sendMessage() {
             var messageInput = document.getElementById("messageInput");
             var message = messageInput.value;
-            ws.send(message);
-            messageInput.value = "";
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
+                messageInput.value = "";
+            } else {
+                console.log("La connexion n'est pas encore établie.");
+            }
         }
     </script>
 </body>
