@@ -3,17 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chat</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Chat en temps réel</title>
 </head>
 <body>
-    <div id="chat-container">
-        <div id="messages">
-        </div>
-        <form action="/send" method="post">
-            <input type="text" name="message" placeholder="Type your message..." autocomplete="off">
-            <button type="submit">Send</button>
-        </form>
-    </div>
+    <input type="text" id="messageInput" placeholder="Entrez votre message">
+    <button onclick="sendMessage()">Envoyer</button>
+    <ul id="messages"></ul>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+            socket.emit('message', message);
+            messageInput.value = '';
+        }
+
+        socket.on('message', (message) => {
+            const messagesList = document.getElementById('messages');
+            const messageItem = document.createElement('li');
+            messageItem.textContent = message;
+            messagesList.appendChild(messageItem);
+        });
+    </script>
 </body>
 </html>

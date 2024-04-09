@@ -1,37 +1,76 @@
 package main
 
 import (
-    "fmt"
-    "html/template"
-    "log"
-    "net/http"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
-var messages []string
+var clients = make(map[*websocket.Conn]bool) // Map pour conserver la liste des clients connectés
+var broadcast = make(chan Message)           // Channel pour diffuser les messages à tous les clients
+
+// Configuration de la mise en forme des messages
+type Message struct {
+	Content string `json:"content"`
+}
+
+// Configuration de la mise en forme des upgradées
+var upgrader = websocket.Upgrader{}
 
 func main() {
-    http.HandleFunc("/", handleIndex)
-    http.HandleFunc("/send", handleSend)
-    
-    log.Println("Server started. Listening on port 8080...")
-    log.Fatal(http.ListenAndServe(":8080", nil))
+	// Gestion des routes
+	http.HandleFunc("/ws", handleConnections)
+
+	// Démarrage de la goroutine pour diffuser les messages aux clients
+	go handleMessages()
+
+	// Démarrage du serveur
+	log.Println("Serveur WebSocket démarré sur :8000")
+	err := http.ListenAndServe(":8000", nil)
+	if err != nil {
+		log.Fatal("Erreur de démarrage du serveur: ", err)
+	}
 }
 
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-    tpl := template.Must(template.ParseFiles("index.html"))
-    tpl.Execute(w, messages)
+func handleConnections(w http.ResponseWriter, r *http.Request) {
+	// Mise à niveau de la connexion HTTP à une connexion WebSocket
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Fermer la connexion lorsque la fonction retourne
+	defer ws.Close()
+
+	// Ajouter le client à la liste des clients connectés
+	clients[ws] = true
+
+	for {
+		var msg Message
+		// Lire le message du client
+		err := ws.ReadJSON(&msg)
+		if err != nil {
+			log.Printf("Erreur de lecture du message: %v", err)
+			delete(clients, ws) // Supprimer le client de la liste en cas d'erreur
+			break
+		}
+		// Envoyer le message reçu à la goroutine de diffusion
+		broadcast <- msg
+	}
 }
 
-func handleSend(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
-    
-    message := r.FormValue("message")
-    messages = append(messages, message)
-    fmt.Println("Message received:", message)
-    
-    // Redirect to the home page to display the updated messages
-    http.Redirect(w, r, "/", http.StatusSeeOther)
+func handleMessages() {
+	for {
+		// Récupérer le prochain message de la chaîne de diffusion
+		msg := <-broadcast
+		// Diffuser le message à tous les clients connectés
+		for client := range clients {
+			err := client.WriteJSON(msg)
+			if err != nil {
+				log.Printf("Erreur d'écriture du message: %v", err)
+				client.Close()          // Fermer la connexion en cas d'erreur
+				delete(clients, client) // Supprimer le client de la liste en cas d'erreur
+			}
+		}
+	}
 }
