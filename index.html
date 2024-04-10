@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Blind Test</title>
 </head>
 <body>
-    <form action="/goBlindTest" method="post">
-        <h2>goBlindTest</h2>
-        <input type="submit">
-    </form>
+    <h2>Blind Test</h2>
+    <audio controls>
+        <source src="/static/{{.}}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 </body>
 </html>

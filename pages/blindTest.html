@@ -3,34 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Blind Test</title>
+    <style>
+        body.green-background {
+            background-color: green;
+        }
+        body.red-background {
+            background-color: red;
+        }
+    </style>
 </head>
 <body>
-    <form action="/Home" method="post">
-        <h1>home</h1>
-        <input type="submit">
+    <h2>Blind Test de ouf</h2>
+    <audio id="audioPlayer" controls>
+        <source id="audioSource" src="/{{.}}" type="audio/mpeg">
+    </audio>
+    <form action="/changeMusic" method="post">
+        <button type="submit">Changer la musique</button>
     </form>
-        <input type="text" id="messageInput" placeholder="Entrez votre message">
-        <button onclick="sendMessage()">Envoyer</button>
-        <ul id="messageList"></ul>
-    
-        <script>
-            var ws = new WebSocket("ws://localhost:8080/goBlindTest/webs");
-    
-            ws.onmessage = function(event) {
-                var messageList = document.getElementById("messageList");
-                var li = document.createElement("li");
-                li.textContent = event.data;
-                messageList.appendChild(li);
-            };
-    
-            function sendMessage() {
-                var messageInput = document.getElementById("messageInput");
-                var message = messageInput.value;
-                ws.send(message);
-                messageInput.value = "";
+    <form id="checkMusicForm">
+        <input type="text" id="musicNameInput" placeholder="Nom de la musique">
+        <input type="submit" value="Vérifier">
+        <p id="message"></p>
+    </form>
+
+    <script>
+        document.getElementById("checkMusicForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var musicName = document.getElementById("musicNameInput").value.trim();
+            var currentMusic = "{{.}}";
+            var correctMusicName = currentMusic.substring(currentMusic.lastIndexOf("/") + 1, currentMusic.length - 4);
+            if (musicName === correctMusicName) {
+                document.body.classList.remove("red-background");
+                document.body.classList.add("green-background");
+                document.getElementById("message").innerText = "Correct !";
+            } else {
+                document.body.classList.remove("green-background")
+                document.body.classList.add("red-background");
+                document.getElementById("message").innerText = "Incorrect. La réponse est : " + correctMusicName;
             }
-        </script>
-    </body>
-    </html>
-    
+        });
+    </script>
+</body>
+</html>
