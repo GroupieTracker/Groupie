@@ -3,37 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Chat</title>
+    <title>Home</title>
 </head>
 <body>
-    <input type="text" id="messageInput" placeholder="Entrez votre message">
-    <button onclick="sendMessage()">Envoyer</button>
-    <ul id="messageList"></ul>
-
-    <script>
-        var wss = new WebSocket("wss://groupie-tracker.vitrihome.fr/echo");
-        console.log(ws);
-        wss.onopen = function(event) {
-            console.log("Connexion établie.");
-        };
-
-        wss.onmessage = function(event) {
-            var messageList = document.getElementById("messageList");
-            var li = document.createElement("li");
-            li.textContent = event.data;
-            messageList.appendChild(li);
-        };
-
-        function sendMessage() {
-            var messageInput = document.getElementById("messageInput");
-            var message = messageInput.value;
-            if (wss.readyState === WebSocket.OPEN) {
-                wss.send(message);
-                messageInput.value = "";
-            } else {
-                console.log("La connexion n'est pas encore établie.");
-            }
-        }
-    </script>
+    <form action="/goBlindTest" method="post">
+        <h2>goBlindTest</h2>
+        <input type="submit">
+    </form>
+    <form action="/goGuessTheSong" method="post">
+        <h2>goGuessTheSong</h2>
+        <input type="submit">
+    </form>
 </body>
 </html>
