@@ -36,7 +36,7 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 
 
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./pages/blindTest.html")
+	tmpl, err := template.ParseFiles("./pages/guessTheSong.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
