@@ -12,13 +12,11 @@
     </form>
         <input type="text" id="messageInput" placeholder="Entrez votre message">
         <button onclick="sendMessage()">Envoyer</button>
+        <h1>Guess th song</h1>
         <ul id="messageList"></ul>
-        <h1>
-            blindTest
-        </h1>
     
         <script>
-            var ws = new WebSocket("ws://localhost:8080/goBlindTest/webs");
+            var ws = new WebSocket("ws://localhost:8080/goGuessTheSong/webs");
     
             ws.onmessage = function(event) {
                 var messageList = document.getElementById("messageList");
