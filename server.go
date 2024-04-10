@@ -1,75 +1,46 @@
-package main
+package main 
 
 import (
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/websocket"
+	"strconv"
+	
 )
 
-var clients = make(map[*websocket.Conn]bool) // Map pour conserver la liste des clients connectés
-var broadcast = make(chan Message)           // Channel pour diffuser les messages à tous les clients
-
-// Configuration de la mise en forme des messages
-type Message struct {
-	Content string `json:"content"`
-}
-
-// Configuration de la mise en forme des upgradées
-var upgrader = websocket.Upgrader{}
-
-func main() {
-	// Gestion des routes
-	http.HandleFunc("/ws", handleConnections)
-
-	// Démarrage de la goroutine pour diffuser les messages aux clients
-	go handleMessages()
-
-	// Démarrage du serveur
-	log.Println("Serveur WebSocket démarré sur :8000")
-	err := http.ListenAndServe(":8000", nil)
+func Home(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./index.html")
 	if err != nil {
-		log.Fatal("Erreur de démarrage du serveur: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+	tmpl.Execute(w, nil)
 }
 
-func handleConnections(w http.ResponseWriter, r *http.Request) {
-	// Mise à niveau de la connexion HTTP à une connexion WebSocket
-	ws, err := upgrader.Upgrade(w, r, nil)
+func GoBlindTest(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./pages/blindTest.html")
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	// Fermer la connexion lorsque la fonction retourne
-	defer ws.Close()
-
-	// Ajouter le client à la liste des clients connectés
-	clients[ws] = true
-
-	for {
-		var msg Message
-		// Lire le message du client
-		err := ws.ReadJSON(&msg)
-		if err != nil {
-			log.Printf("Erreur de lecture du message: %v", err)
-			delete(clients, ws) // Supprimer le client de la liste en cas d'erreur
-			break
-		}
-		// Envoyer le message reçu à la goroutine de diffusion
-		broadcast <- msg
-	}
+	tmpl.Execute(w, nil)
 }
 
-func handleMessages() {
-	for {
-		// Récupérer le prochain message de la chaîne de diffusion
-		msg := <-broadcast
-		// Générer le code HTML pour afficher le message
-		messageHTML := "<div>" + msg.Content + "</div>"
-		// Ajouter le message à une variable globale contenant tous les messages
-		allMessages += messageHTML
-		// Actualiser la page avec tous les messages
-		http.HandleFunc("/", handleRoot)
-		http.ListenAndServe(":8000", nil)
-	}
+
+func main()  {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		Home(w, r)
+	})
+	http.HandleFunc("/goBlindTest", func(w http.ResponseWriter, r *http.Request) {
+		GoBlindTest(w, r)
+	})
+	http.HandleFunc("/blindTest", func(w http.ResponseWriter, r *http.Request) {
+		BlindTest(w, r)
+	})
 }
 
+fs := http.FileServer(http.Dir("static/"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	fmt.Println("Server running on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
