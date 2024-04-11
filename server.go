@@ -69,6 +69,7 @@ func main() {
 	http.HandleFunc("/Scattergories/webs",Groupi.WsScattergories)
 
 
+
     // Serveur de fichiers statiques
     fs := http.FileServer(http.Dir("static/"))
     http.Handle("/static/", http.StripPrefix("/static/", fs))
