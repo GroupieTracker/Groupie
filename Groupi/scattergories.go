@@ -9,29 +9,27 @@ import(
 	"time"
 )
 
-
-func boucl()  {
-
-	time.Sleep(20 * time.Second)
-		SendRandomLetter()
-
+func boucl(room *Room) {
+	for {
+		time.Sleep(3 * time.Second)
+		SendRandomLetter(room)
+	}
 }
 
+func SendRandomLetter(room *Room) {
+	letter := getRandomLetter()
+	mutex.Lock()
+	defer mutex.Unlock()
 
-func SendRandomLetter() {
-		letter := getRandomLetter()
-		mutex.Lock()
-		fmt.Println(	letter)
-		for _, room := range rooms {
-			for conn := range room.Connections {
-				if err := conn.WriteMessage(websocket.TextMessage, []byte(letter)); err != nil {
-					log.Println("err : ",err)
-					conn.Close()
-					delete(room.Connections, conn)
-				}
-			}
+	fmt.Println(letter)
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, []byte(letter))
+		if err != nil {
+			log.Println("Error writing message:", err)
+			conn.Close()
+			delete(room.Connections, conn)
 		}
-		mutex.Unlock()
+	}
 }
 
 func getRandomLetter() string {
@@ -41,9 +39,7 @@ func getRandomLetter() string {
 }
 
 func WsScattergories(w http.ResponseWriter, r *http.Request) {
-
-	
-fmt.Println("fmt")
+	fmt.Println("fmt")
 
 	// Récupère l'identifiant de la room à partir des paramètres de la requête
 	roomID := r.URL.Query().Get("room")
@@ -63,40 +59,26 @@ fmt.Println("fmt")
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("dzudbzhda:",err)
+		log.Println("Error upgrading to WebSocket:", err)
 		return
 	}
 	defer conn.Close()
 
-	boucl()
-	// Ajoute la connexion à la liste des connexions de la room
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()
 
+	// Lancement de la goroutine pour l'envoi de lettres aléatoires
+	go boucl(room)
+
 	for {
-		messageType, p, err := conn.ReadMessage()
+		_, _, err := conn.ReadMessage()
 		if err != nil {
-			log.Println(err)
-			// En cas de déconnexion, supprime la connexion de la liste de la room
+			log.Println("Error reading message:", err)
 			mutex.Lock()
 			delete(room.Connections, conn)
 			mutex.Unlock()
 			return
 		}
-
-		fmt.Println(string(p)) // Pour afficher le message reçu côté serveur
-
-		// Diffuse le message à toutes les connexions de la room
-		mutex.Lock()
-		for conn := range room.Connections {
-			if err := conn.WriteMessage(messageType, p); err != nil {
-				log.Println(err)
-				conn.Close()
-				delete(room.Connections, conn)
-			}
-		}
-		mutex.Unlock()
 	}
-
 }
