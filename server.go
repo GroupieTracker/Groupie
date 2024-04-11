@@ -1,27 +1,28 @@
 package main
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
-	"path/filepath"
 	"time"
 )
 
-var audioFiles []string
+var lastMusic string
+var spotifyTracks []string
+var Lasttracks string
 
 func init() {
 	rand.Seed(time.Now().Unix())
 
-	audioFiles, _ = findAudioFiles("static/audio")
+	loadSpotifyTracks("static/spotify_tracks.json")
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./index.html")
+	tmpl, err := template.ParseFiles("./pages/blindTest.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -30,15 +31,26 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func ChangeMusic(w http.ResponseWriter, r *http.Request) {
-	randomAudio := audioFiles[rand.Intn(len(audioFiles))]
+	Start:
+	randomSpotifyTrack := spotifyTracks[rand.Intn(len(spotifyTracks))]
+	if randomSpotifyTrack == Lasttracks {
+		goto Start
+	}
+	Lasttracks = randomSpotifyTrack
 
-	http.Redirect(w, r, "/goBlindTest?music="+randomAudio, http.StatusSeeOther)
+
+	http.Redirect(w, r, "/goBlindTest?music="+randomSpotifyTrack, http.StatusSeeOther)
 }
 
 func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 	music := r.URL.Query().Get("music")
 	if music == "" {
-		music = audioFiles[rand.Intn(len(audioFiles))]
+		randomSpotifyTrack := spotifyTracks[rand.Intn(len(spotifyTracks))]
+		for randomSpotifyTrack == lastMusic {
+			randomSpotifyTrack = spotifyTracks[rand.Intn(len(spotifyTracks))]
+		}
+		lastMusic = randomSpotifyTrack
+		music = randomSpotifyTrack
 	}
 
 	tmpl, err := template.ParseFiles("./pages/blindTest.html")
@@ -49,25 +61,16 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, music)
 }
 
-func findAudioFiles(dir string) ([]string, error) {
-	var audioFiles []string
-
-	files, err := ioutil.ReadDir(dir)
+func loadSpotifyTracks(filename string) {
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".mp3" || filepath.Ext(file.Name()) == ".wav" {
-			audioFiles = append(audioFiles, filepath.Join(dir, file.Name()))
-		}
+	err = json.Unmarshal(data, &spotifyTracks)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	if len(audioFiles) == 0 {
-		return nil, errors.New("no audio files found in the directory")
-	}
-
-	return audioFiles, nil
 }
 
 func main() {

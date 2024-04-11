@@ -15,33 +15,32 @@
 </head>
 <body>
     <h2>Blind Test de ouf</h2>
-    <audio id="audioPlayer" controls>
-        <source id="audioSource" src="/{{.}}" type="audio/mpeg">
-    </audio>
-    <form action="/changeMusic" method="post">
+    <iframe id="spotifyIframe" class="hidden-iframe" src="{{.}}" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        <form action="/changeMusic" method="post">
         <button type="submit">Changer la musique</button>
     </form>
-    <form id="checkMusicForm">
-        <input type="text" id="musicNameInput" placeholder="Nom de la musique">
-        <input type="submit" value="Vérifier">
-        <p id="message"></p>
-    </form>
+    <button id="getSpotifyTrackTitleButton">Obtenir le titre de la piste Spotify</button>
+    <input type="hidden" id="spotifyTrackURLs" value=>
+    <p id="message"></p>
 
     <script>
-        document.getElementById("checkMusicForm").addEventListener("submit", function(event) {
+        var spotifyTrackURLs = JSON.parse(document.getElementById("spotifyTrackURLs").value); // Récupère la liste des liens Spotify depuis l'input hidden
+
+        document.getElementById("getSpotifyTrackTitleButton").addEventListener("click", function(event) {
             event.preventDefault();
-            var musicName = document.getElementById("musicNameInput").value.trim();
-            var currentMusic = "{{.}}";
-            var correctMusicName = currentMusic.substring(currentMusic.lastIndexOf("/") + 1, currentMusic.length - 4);
-            if (musicName === correctMusicName) {
+            var trackID = spotifyTrackURLs[Math.floor(Math.random() * spotifyTrackURLs.length)].split('/').pop(); // Choisis un lien Spotify aléatoire de la liste
+            fetch("/getSpotifyTrackTitle?track_id=" + trackID)
+            .then(response => response.text())
+            .then(data => {
                 document.body.classList.remove("red-background");
                 document.body.classList.add("green-background");
-                document.getElementById("message").innerText = "Correct !";
-            } else {
-                document.body.classList.remove("green-background")
+                document.getElementById("message").innerText = "Le titre de la piste est : " + data;
+            })
+            .catch(error => {
+                document.body.classList.remove("green-background");
                 document.body.classList.add("red-background");
-                document.getElementById("message").innerText = "Incorrect. La réponse est : " + correctMusicName;
-            }
+                document.getElementById("message").innerText = "Une erreur s'est produite : " + error;
+            });
         });
     </script>
 </body>
