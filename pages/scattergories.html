@@ -8,10 +8,9 @@
   <body>
     <form action="/Home" method="post">
       <h1>home</h1>
-      <input type="submit" /> 
+      <input type="submit" />
     </form>
 
-    
     <h1 id="lettre"></h1>
     <table>
       <thead>
@@ -45,13 +44,13 @@
     <script>
       var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
-      var ws = new WebSocket("ws://localhost:8080/Scattergories/webs?room="+roomID);
+      var ws = new WebSocket(
+        "ws://localhost:8080/Scattergories/webs?room=" + roomID
+      );
       ws.onmessage = function (event) {
         var lettre = document.getElementById("lettre");
         lettre.textContent = event.data;
       };
-
-
       
 
       function collectAndSendValues() {
@@ -60,14 +59,17 @@
         var good = true;
         inputs.forEach(function (input) {
           values.push(input.value);
-          if (input.value.charAt(0).toLowerCase() !== "a") {
-            good = false;
-          }
+          // if (input.value.charAt(0).toLowerCase() !== "a") {
+          //   good = false;
+          // }
         });
         if (good) {
-          console.log(JSON.stringify(values)  )
-          ws.send(JSON.stringify(values));
-
+          if (ws.readyState === WebSocket.OPEN) {
+            console.log(JSON.stringify(values));
+            ws.send(JSON.stringify(values));
+          } else {
+            console.error("WebSocket is not open.");
+          }
         }
       }
     </script>

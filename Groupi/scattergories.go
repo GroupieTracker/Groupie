@@ -37,48 +37,53 @@ func getRandomLetter() string {
 	randomIndex := rand.Intn(len(letters))
 	return letters[randomIndex]
 }
-
 func WsScattergories(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("fmt")
+    fmt.Println("fmt")
 
-	// Récupère l'identifiant de la room à partir des paramètres de la requête
-	roomID := r.URL.Query().Get("room")
-	if roomID == "" {
-		roomID = "petitBac"
-	}
-	// Vérifie si la room existe
-	room, ok := rooms[roomID]
-	if !ok {
-		// Crée une nouvelle room si elle n'existe pas
-		room = &Room{
-			ID:          roomID,
-			Connections: make(map[*websocket.Conn]bool),
-		}
-		rooms[roomID] = room
-	}
+    // Récupère l'identifiant de la room à partir des paramètres de la requête
+    roomID := r.URL.Query().Get("room")
+    if roomID == "" {
+        roomID = "petitBac"
+    }
+    // Vérifie si la room existe
+    room, ok := rooms[roomID]
+    if !ok {
+        // Crée une nouvelle room si elle n'existe pas
+        room = &Room{
+            ID:          roomID,
+            Connections: make(map[*websocket.Conn]bool),
+        }
+        rooms[roomID] = room
+    }
 
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("Error upgrading to WebSocket:", err)
-		return
-	}
-	defer conn.Close()
+    conn, err := upgrader.Upgrade(w, r, nil)
+    if err != nil {
+        log.Println("Error upgrading to WebSocket:", err)
+        return
+    }
+    defer conn.Close()
 
-	mutex.Lock()
-	room.Connections[conn] = true
-	mutex.Unlock()
+    mutex.Lock()
+    room.Connections[conn] = true
+    mutex.Unlock()
 
-	// Lancement de la goroutine pour l'envoi de lettres aléatoires
-	go boucl(room)
+    // Lancement de la goroutine pour l'envoi de lettres aléatoires
+    go boucl(room)
 
-	for {
-		_, _, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("Error reading message:", err)
-			mutex.Lock()
-			delete(room.Connections, conn)
-			mutex.Unlock()
-			return
-		}
-	}
+    for {
+        messageType, p, err := conn.ReadMessage()
+        if err != nil {
+            log.Println("Error reading message:", err)
+            mutex.Lock()
+            delete(room.Connections, conn)
+            mutex.Unlock()
+            return
+        }
+        
+        // Afficher le message reçu
+        fmt.Printf("Message reçu de la connexion %p : %s\n", conn, p)
+
+        // Si vous avez besoin du type du message, vous pouvez également l'afficher
+        fmt.Printf("Type du message : %d\n", messageType)
+    }
 }
