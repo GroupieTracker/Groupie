@@ -16,7 +16,7 @@
         <ul id="messageList"></ul>
     
         <script>
-            var ws = new WebSocket("ws://localhost:8080/goGuessTheSong/webs");
+            var ws = new WebSocket("ws://localhost:8080/GuessTheSong/webs");
     
             ws.onmessage = function(event) {
                 var messageList = document.getElementById("messageList");

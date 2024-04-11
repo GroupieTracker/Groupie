@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <form action="/Home" method="post">
+      <h1>home</h1>
+      <input type="submit" />
+    </form>
+    <input type="text" id="messageInput" placeholder="Entrez votre message" />
+    <button onclick="sendMessage()">Envoyer</button>
+    <h1 id="lettre"></h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Artiste</th>
+          <th>Album</th>
+          <th>Groupe de musique</th>
+          <th>Instrument de musique</th>
+          <th>Featuring</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" name="artiste" id="artiste" /></td>
+          <td><input type="text" name="album" id="album" /></td>
+          <td><input type="text" name="group" id="group" /></td>
+          <td><input type="text" name="instru" id="instru" /></td>
+          <td><input type="text" name="feat" id="feat" /></td>
+          <td><input type="button" value="Fini"></td>
+        </tr>
+      </tbody>
+    </table>
+    <ul id="messageList"></ul>
+
+    <script>
+      var ws = new WebSocket("ws://localhost:8080/Scattergories/webs");
+
+      ws.onmessage = function (event) {
+        var messageList = document.getElementById("messageList");
+        var li = document.createElement("li");
+        li.textContent = event.data;
+        messageList.appendChild(li);
+      };
+
+      function sendMessage() {
+        var messageInput = document.getElementById("messageInput");
+        var message = messageInput.value;
+        ws.send(message);
+        messageInput.value = "";
+      }
+    </script>
+  </body>
+</html>
