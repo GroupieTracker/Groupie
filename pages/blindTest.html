@@ -11,37 +11,28 @@
         body.red-background {
             background-color: red;
         }
+        .score {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
     <h2>Blind Test de ouf</h2>
-    <iframe id="spotifyIframe" class="hidden-iframe" src="{{.}}" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-        <form action="/changeMusic" method="post">
+    <iframe id="spotifyIframe" class="spotifyIframe hidden-iframe" src="{{.TrackSpot}}" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+
+    <form action="/changeMusic" method="post">
         <button type="submit">Changer la musique</button>
     </form>
-    <button id="getSpotifyTrackTitleButton">Obtenir le titre de la piste Spotify</button>
-    <input type="hidden" id="spotifyTrackURLs" value=>
-    <p id="message"></p>
-
-    <script>
-        var spotifyTrackURLs = JSON.parse(document.getElementById("spotifyTrackURLs").value); // Récupère la liste des liens Spotify depuis l'input hidden
-
-        document.getElementById("getSpotifyTrackTitleButton").addEventListener("click", function(event) {
-            event.preventDefault();
-            var trackID = spotifyTrackURLs[Math.floor(Math.random() * spotifyTrackURLs.length)].split('/').pop(); // Choisis un lien Spotify aléatoire de la liste
-            fetch("/getSpotifyTrackTitle?track_id=" + trackID)
-            .then(response => response.text())
-            .then(data => {
-                document.body.classList.remove("red-background");
-                document.body.classList.add("green-background");
-                document.getElementById("message").innerText = "Le titre de la piste est : " + data;
-            })
-            .catch(error => {
-                document.body.classList.remove("green-background");
-                document.body.classList.add("red-background");
-                document.getElementById("message").innerText = "Une erreur s'est produite : " + error;
-            });
-        });
-    </script>
+    <form action="/getTitle" method="post">
+        <button type="submit">titre</button>
+    </form>
+    <form action="/verifTrack" method="post">
+        <input id="Answer" name="answer" onkeydown="if (event.keyCode === 13) this.form.submit()">
+    </form>
+    
+    <div class="score">Score: {{.Score}}</div>
 </body>
 </html>
