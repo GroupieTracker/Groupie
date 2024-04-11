@@ -10,6 +10,7 @@
       <h1>home</h1>
       <input type="submit" />
     </form>
+    <div id="timer"></div>
 
     <h1 id="lettre"></h1>
     <table>
@@ -33,7 +34,7 @@
             <input
               type="button"
               value="Fini"
-              onclick="collectAndSendValues()"
+              onclick="end()"
             />
           </td>
         </tr>
@@ -48,25 +49,47 @@
         "ws://localhost:8080/Scattergories/webs?room=" + roomID
       );
       ws.onmessage = function (event) {
-        var lettre = document.getElementById("lettre");
-        lettre.textContent = event.data;
+        console.log(parseInt(event.data));
+       
+        if (event.data==="catchData") {
+          collectAndSendValues()
+        }else if (parseInt(event.data)!==NaN  ){
+          var timer = document.getElementById("timer");
+          timer.textContent=event.data
+          
+        } else if (event.data.length===1){
+          var lettre = document.getElementById("lettre");
+          lettre.textContent = event.data;
+
+        }
       };
-      
 
       function collectAndSendValues() {
         var inputs = document.querySelectorAll('input[type="text"]');
         var values = [];
-        var good = true;
         inputs.forEach(function (input) {
           values.push(input.value);
-          // if (input.value.charAt(0).toLowerCase() !== "a") {
-          //   good = false;
-          // }
+        });
+        if (ws.readyState === WebSocket.OPEN) {
+          console.log(JSON.stringify(values));
+          ws.send(JSON.stringify(values));
+        } else {
+          console.error("WebSocket is not open.");
+        }
+      }
+      function end() {
+        var inputs = document.querySelectorAll('input[type="text"]');
+        var lettre = document.getElementById("lettre");
+        var good = true;
+        inputs.forEach(function (input) {
+          if (input.value.charAt(0).toLowerCase() !== lettre.textContent.toLowerCase()) {
+            good = false;
+          }
         });
         if (good) {
           if (ws.readyState === WebSocket.OPEN) {
-            console.log(JSON.stringify(values));
-            ws.send(JSON.stringify(values));
+            console.log();
+            ws.send("end");
           } else {
             console.error("WebSocket is not open.");
           }

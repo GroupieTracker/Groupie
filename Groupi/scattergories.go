@@ -9,10 +9,12 @@ import(
 	"time"
 )
 
-func boucl(room *Room) {
+func bouclTimer(room *Room) {
+	var  rftgyhu int = 10
 	for {
-		time.Sleep(3 * time.Second)
-		SendRandomLetter(room)
+		TimerForPablo(room , rftgyhu)
+		rftgyhu=rftgyhu-1
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -24,6 +26,21 @@ func SendRandomLetter(room *Room) {
 	fmt.Println(letter)
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, []byte(letter))
+		if err != nil {
+			log.Println("Error writing message:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+}
+func TimerForPablo(room *Room ,rftgyhu int) {
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	for conn := range room.Connections {
+		tim := []byte(fmt.Sprintf("%d", rftgyhu))
+		err := conn.WriteMessage(websocket.TextMessage, []byte(tim))
 		if err != nil {
 			log.Println("Error writing message:", err)
 			conn.Close()
@@ -68,8 +85,8 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
     mutex.Unlock()
 
     // Lancement de la goroutine pour l'envoi de lettres aléatoires
-    go boucl(room)
-
+    go bouclTimer(room)
+SendRandomLetter(room)
     for {
         messageType, p, err := conn.ReadMessage()
         if err != nil {
@@ -82,7 +99,17 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
         
         // Afficher le message reçu
         fmt.Printf("Message reçu de la connexion %p : %s\n", conn, p)
-
+if string(p)=="end" {
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, []byte("catchData"))
+		if err != nil {
+			log.Println("Error writing message:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+	
+}
         // Si vous avez besoin du type du message, vous pouvez également l'afficher
         fmt.Printf("Type du message : %d\n", messageType)
     }
