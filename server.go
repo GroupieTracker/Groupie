@@ -17,6 +17,7 @@ import (
 )
 
 var lastMusic string
+var spotifyClient *spotify.Client
 var spotifyTracks []string
 var Track string
 var Score int
@@ -38,16 +39,34 @@ func initSpotifyClient() *spotify.Client {
 func init() {
 	rand.Seed(time.Now().Unix())
 
+	spotifyClient = initSpotifyClient()
+
 	loadSpotifyTracks("static/spotify_tracks.json")
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
+
+	autoplaySpotifyTrack()
+
 	tmpl, err := template.ParseFiles("./pages/blindTest.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	tmpl.Execute(w, nil)
+}
+
+func autoplaySpotifyTrack() {
+	randomSpotifyTrack := Track
+
+	// Start playback of the random track
+	err := spotifyClient.PlayOpt(&spotify.PlayOptions{
+		URIs: []spotify.URI{spotify.URI(randomSpotifyTrack)},
+	})
+	if err != nil {
+		log.Println("Error starting playback:", err)
+		return
+	}
 }
 
 func ChangeMusic(w http.ResponseWriter, r *http.Request) {
@@ -113,6 +132,9 @@ func extractTrackID(spotifyLink string) string {
 }
 
 func GoBlindTest(w http.ResponseWriter, r *http.Request) {
+
+	autoplaySpotifyTrack()
+
 	music := r.URL.Query().Get("music")
 	if music == "" {
 		randomSpotifyTrack := spotifyTracks[rand.Intn(len(spotifyTracks))]
