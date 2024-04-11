@@ -1,67 +1,56 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 
-	Groupi "Groupi/Groupi"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./index.html")
+	if r.Method != http.MethodPost {
+		http.ServeFile(w, r, "./login.html")
+		return
+	}
+
+	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, nil)
+	pseudo := r.Form.Get("pseudo")
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+
+	db, err := sql.Open("sqlite3", "BDD.db")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec("INSERT INTO USER (pseudo, email, password) VALUES (?, ?, ?)", pseudo, email, password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/success", http.StatusSeeOther)
 }
 
-func GoBlindTest(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./pages/blindTest.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// tab := []string{"Bonjour", "mon", "ami"}
-	// if str!="" {
-
-	// 	tab = append(tab, str)
-	// }
-	tmpl.Execute(w, nil)
-}
-
-func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./pages/guessTheSong.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	tmpl.Execute(w, nil)
+func Success(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Connexion réussie!")
 }
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		Home(w, r)
-	})
+	http.HandleFunc("/", Home)
+	http.HandleFunc("/success", Success)
 
-	// URL pour le rendu de la page du blind test
-	http.HandleFunc("/goBlindTest", func(w http.ResponseWriter, r *http.Request) {
-		GoBlindTest(w, r)
-	})
-
-	http.HandleFunc("/goGuessTheSong", func(w http.ResponseWriter, r *http.Request) {
-		GoGuessTheSong(w, r)
-	})
-
-	http.HandleFunc("/goBlindTest/webs", Groupi.WsBlindTest)
-	http.HandleFunc("/goGuessTheSong/webs", Groupi.WsGuessTheSong)
-
-	// Serveur de fichiers statiques
-	fs := http.FileServer(http.Dir("static/"))
+	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	fmt.Println("Server running on port 8080")
+	fmt.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
