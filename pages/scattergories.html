@@ -10,9 +10,9 @@
       <h1>home</h1>
       <input type="submit" />
     </form>
-    <div id="timer"></div>
+    <div id="timer">hjk</div>
 
-    <h1 id="lettre"></h1>
+    <div id="lettre"></div>
     <table>
       <thead>
         <tr>
@@ -50,9 +50,10 @@
       );
       ws.onmessage = function (event) {
         console.log(event.data);
+        var integer = parseInt(event.data, 10);
         if (event.data==="catchData") {
           collectAndSendValues()
-        }else if (parseInt(event.data)!==NaN  ){
+        }else if (!isNaN(integer)){
           var timer = document.getElementById("timer");
           timer.textContent=event.data
         } else if (event.data.length===1){
