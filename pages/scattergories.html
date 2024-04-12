@@ -49,14 +49,12 @@
         "ws://localhost:8080/Scattergories/webs?room=" + roomID
       );
       ws.onmessage = function (event) {
-        console.log(parseInt(event.data));
-       
+        console.log(event.data);
         if (event.data==="catchData") {
           collectAndSendValues()
         }else if (parseInt(event.data)!==NaN  ){
           var timer = document.getElementById("timer");
           timer.textContent=event.data
-          
         } else if (event.data.length===1){
           var lettre = document.getElementById("lettre");
           lettre.textContent = event.data;

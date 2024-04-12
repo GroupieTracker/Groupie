@@ -55,8 +55,6 @@ func getRandomLetter() string {
 	return letters[randomIndex]
 }
 func WsScattergories(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("fmt")
-
     // Récupère l'identifiant de la room à partir des paramètres de la requête
     roomID := r.URL.Query().Get("room")
     if roomID == "" {
@@ -84,8 +82,9 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
     room.Connections[conn] = true
     mutex.Unlock()
 
-    // Lancement de la goroutine pour l'envoi de lettres aléatoires
+	
     go bouclTimer(room)
+
 SendRandomLetter(room)
     for {
         messageType, p, err := conn.ReadMessage()

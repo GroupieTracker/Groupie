@@ -29,6 +29,14 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 }
 
 
+func GOLobbyOfScattergories()  {
+	//Creation d'une nouvelle party 
+	//type petiti bac 
+	//REcupere L'id de l'useur et le mais en t'en que createur
+
+	
+}
+
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./pages/guessTheSong.html")
 	if err != nil {
@@ -63,7 +71,8 @@ func main() {
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
     	GoScattergories(w, r)
     })
-  
+
+	
     http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/Scattergories/webs",Groupi.WsScattergories)
