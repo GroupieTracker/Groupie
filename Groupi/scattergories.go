@@ -8,15 +8,48 @@ import(
 	"math/rand"
 	"time"
 )
+round := 5
+
+
+//boucle de jeu {
+	// envoit d'un lettre 
+	// mettre a jours le crono 
+					
+	// fini ?? oui -->
+
+// recuper les données de touts le monde 
+
+// afiche les repose de tout le monde par categorie si elle ne sont pas nulles
+//  ajjote le score en fonction dans la db
+
+// next round 
+// }
+// if round ===0 ->fin
+// affiche un tableau de score 
+// buton replay --> to new lobby
+
+
+
+
+
 
 func bouclTimer(room *Room) {
-	var  rftgyhu int = 10
+	time:= 10
 	for {
-		TimerForPablo(room , rftgyhu)
-		rftgyhu=rftgyhu-1
+		TimerForPablo(room , time)
+		time=time-1
 		time.Sleep(1 * time.Second)
 	}
 }
+
+
+
+
+
+
+
+
+
 
 func SendRandomLetter(room *Room) {
 	letter := getRandomLetter()

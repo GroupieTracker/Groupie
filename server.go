@@ -10,6 +10,9 @@ import (
 )
 
 
+
+
+
 func Home(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./index.html")
 	if err != nil {
@@ -34,7 +37,7 @@ func GOLobbyOfScattergories()  {
 	//type petiti bac 
 	//REcupere L'id de l'useur et le mais en t'en que createur
 
-	
+
 }
 
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
