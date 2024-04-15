@@ -95,34 +95,35 @@ func sendTimer(room *Room, time int) {
 }
 
 func WsScattergories(w http.ResponseWriter, r *http.Request) {
-	round := 5
+  round := 5
 	// Récupère l'identifiant de la room à partir des paramètres de la requête
 	roomID := r.URL.Query().Get("room")
 	if roomID == "" {
-		roomID = "petitBac"
+    roomID = "petitBac"
 	}
 	// Vérifie si la room existe
 	room, ok := rooms[roomID]
 	if !ok {
-		// Crée une nouvelle room si elle n'existe pas
+    // Crée une nouvelle room si elle n'existe pas
 		room = &Room{
-			ID:          roomID,
+      ID:          roomID,
 			Connections: make(map[*websocket.Conn]bool),
 		}
 		rooms[roomID] = room
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket:", err)
+    log.Println("Error upgrading to WebSocket:", err)
 		return
 	}
 	defer conn.Close()
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()
-
+  
+  var answer []string
 	for i := 0; i < round; i++ {
-
+    
 		//init start of round
 		sendRandomLetter(room)
 		//if id user === chef de la room pour evite les saut de timer {
@@ -167,19 +168,49 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			} else if donnee.Event == "catchBackData" {
-				if 1 == 1 {
-					fmt.Println(donnee.Data)
-
-					// userPseudo := "nomDuJoueur"
+				answer  = donnee.Data
+			
 
 					// chef envoit l'id de de joueur qui doit envoyer c'est reponse
-				} else {
+
+
+          } else if 1==1{
+          // if idUser==idUser {
+          // 	send(tabOfResult)
+          // }
+
+          var tabToSend []any{"nomUser"}
+          tabToSend = append(tabToSend, answer)
+          tabCatchData := struct {
+            Event string `json:"event"`
+            Answer   int    `json:"answer"`
+          }{
+            Event: "Answer",
+            Answer:   tabToSend,
+          }
+          data, err := json.Marshal(tabCatchData)
+          if err != nil {
+            fmt.Println("Erreur de marshalling JSON:", err)
+            return
+          }
+  
+          for conn := range room.Connections {
+            err := conn.WriteMessage(websocket.TextMessage, []byte(data))
+            if err != nil {
+              log.Println("Error writing message:", err)
+              conn.Close()
+              delete(room.Connections, conn)
+            }
+          }
 					//envoyer ses données
-					// if idUser==idUser {
-					// 	send(tabOfResult)
-					// }
 				}
 			}
-		}
+		
 	}
+}
+
+func displayAnswer()  {
+
+
+  
 }

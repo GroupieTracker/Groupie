@@ -20,6 +20,8 @@ var (
     mutex       = sync.Mutex{}           // Mutex pour la synchronisation lors de la gestion des connexions
 )
 
+
+
 func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	// Récupère l'identifiant de la room à partir des paramètres de la requête
 	roomID := r.URL.Query().Get("room")

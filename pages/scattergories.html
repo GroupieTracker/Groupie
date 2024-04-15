@@ -47,7 +47,6 @@
       ws.onmessage = function (event) {
         var data = JSON.parse(event.data);
         console.log(data);
-
         if (data.event == "fetchData") {
           collectAndSendValues();
         } else if (data.event == "timer") {
