@@ -10,9 +10,9 @@
       <h1>home</h1>
       <input type="submit" />
     </form>
-    <div id="timer">hjk</div>
+    <div id="timer">Timer</div>
 
-    <div id="lettre"></div>
+    <div id="lettre">Lettre</div>
     <table>
       <thead>
         <tr>
@@ -49,16 +49,20 @@
         "ws://localhost:8080/Scattergories/webs?room=" + roomID
       );
       ws.onmessage = function (event) {
-        console.log(event.data);
-        var integer = parseInt(event.data, 10);
-        if (event.data==="catchData") {
+        var data = JSON.parse(event.data);
+        console.log(data);
+
+
+        if (data.event=="fetchData") {
           collectAndSendValues()
-        }else if (!isNaN(integer)){
+
+        }else if (data.event=="timer"){
           var timer = document.getElementById("timer");
-          timer.textContent=event.data
-        } else if (event.data.length===1){
+          timer.textContent=data.time
+
+        } else if (data.event == "letter"){
           var lettre = document.getElementById("lettre");
-          lettre.textContent = event.data;
+          lettre.textContent = data.lettre;
 
         }
       };

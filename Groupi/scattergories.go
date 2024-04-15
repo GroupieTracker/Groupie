@@ -8,6 +8,9 @@ import(
 	"math/rand"
 	"time"
 	"regexp"
+
+		"encoding/json"
+	
 )
 
 
@@ -42,12 +45,22 @@ func getRandomLetter() string {
 
 func sendRandomLetter(room *Room) {
 	letter := getRandomLetter()
-	mutex.Lock()
-	defer mutex.Unlock()
-	
-	fmt.Println(letter)
-	for conn := range room.Connections {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(letter))
+	tabLettre := struct {
+        Event string `json:"event"`
+        Lettre  string    `json:"lettre"`
+    }{
+        Event: "letter",
+        Lettre:  letter,
+    }
+    data, err := json.Marshal(tabLettre)
+    if err != nil {
+        fmt.Println("Erreur de marshalling JSON:", err)
+        return
+    }
+    mutex.Lock()
+    defer mutex.Unlock()
+    for conn := range room.Connections {
+        err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
 			log.Println("Error writing message:", err)
 			conn.Close()
@@ -69,14 +82,23 @@ func bouclTimer(room *Room) {
 		time.Sleep(1 * time.Second)
 	}
 }
-func sendTimer(room *Room ,rftgyhu int) {
-
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	for conn := range room.Connections {
-		tim := []byte(fmt.Sprintf("%d", rftgyhu))
-		err := conn.WriteMessage(websocket.TextMessage, []byte(tim))
+func sendTimer(room *Room ,time int) {
+	tabTime := struct {
+        Event string `json:"event"`
+        Time  int    `json:"time"`
+    }{
+        Event: "timer",
+        Time:  time,
+    }
+    data, err := json.Marshal(tabTime)
+    if err != nil {
+        fmt.Println("Erreur de marshalling JSON:", err)
+        return
+    }
+    mutex.Lock()
+    defer mutex.Unlock()
+    for conn := range room.Connections {
+        err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
 			log.Println("Error writing message:", err)
 			conn.Close()
@@ -119,7 +141,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 	sendRandomLetter(room)
 	//if id user === chef de la room pour evite les saut de timer {
 		go bouclTimer(room)
-
+var tabOfResult []string
 	// Check if message
     for {
         _, p, err := conn.ReadMessage()
@@ -137,8 +159,21 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 	
 
 			if string(p)=="end" {
+				tabCatchData := struct {
+					Event string `json:"event"`
+					r  int    `json:"r"`
+				}{
+					Event: "fetchData",
+					r:  -1,
+				}
+				data, err := json.Marshal(tabCatchData)
+				if err != nil {
+					fmt.Println("Erreur de marshalling JSON:", err)
+					return
+				}
+
 				for conn := range room.Connections {
-					err := conn.WriteMessage(websocket.TextMessage, []byte("catchData"))
+					err := conn.WriteMessage(websocket.TextMessage, []byte(data))
 					if err != nil {
 						log.Println("Error writing message:", err)
 						conn.Close()
@@ -148,7 +183,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 			}else{
 				if 1==1 {
 					
-					re := regexp.MustCompile(`"([^"]+)"`)
+					re := regexp.MustCompile(`""`)
 					correspondances := re.FindAllStringSubmatch(string(p), -1)
 					var tabOf []string
 					for _, match := range correspondances {
@@ -157,7 +192,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 					
 					
 					userPseudo := "nomDuJoueur"
-					tabOfResult := make([]string, len(tabOf)+1)
+					tabOfResult = make([]string, len(tabOf)+1)
 					copy(tabOfResult[1:], tabOf)
 					tabOfResult[0] = userPseudo
 					fmt.Println(tabOfResult)
@@ -166,7 +201,9 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 					// chef envoit l'id de de joueur qui doit envoyer c'est reponse
 				}else{
 					//envoyer ses données 
-					
+					// if idUser==idUser {
+					// 	send(tabOfResult)
+					// }
 
 
 				}
