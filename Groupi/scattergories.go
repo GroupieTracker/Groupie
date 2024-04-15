@@ -172,7 +172,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 			
 
 					// chef envoit l'id de de joueur qui doit envoyer c'est reponse
-
+          
 
           } else if 1==1{
           // if idUser==idUser {
