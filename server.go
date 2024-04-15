@@ -3,10 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 
+	"regexp"
+
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -21,22 +25,40 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/register.html")
 }
 
+func Lobby(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./static/lobby.html")
+}
+
 func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Extraire les données du formulaire
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	username := r.Form.Get("new_username")
+	username := r.Form.Get("new_pseudo")
+	email := r.Form.Get("new_email")
 	password := r.Form.Get("new_password")
 
-	// Vérifier si l'utilisateur existe déjà
+	if len(password) < 8 || !containsDigit(password) || !containsLetter(password) || !containsSpecialChar(password) {
+		data := struct {
+			Error string
+		}{
+			Error: "Le mot de passe doit contenir au moins 8 caractères, inclure au moins un chiffre, une lettre et un caractère spécial",
+		}
+		tmpl, err := template.ParseFiles("static/register.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		tmpl.Execute(w, data)
+		return
+	}
+
 	db, err := sql.Open("sqlite3", "BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -52,21 +74,39 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Si l'utilisateur existe déjà, renvoyer une erreur
 	if count > 0 {
 		http.Error(w, "Nom d'utilisateur déjà utilisé", http.StatusBadRequest)
 		return
 	}
 
-	// Ajouter l'utilisateur à la base de données
-	_, err = db.Exec("INSERT INTO USER (pseudo, password) VALUES (?, ?)", username, password)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Erreur lors du hachage du mot de passe", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = db.Exec("INSERT INTO USER (pseudo, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Rediriger l'utilisateur vers la page de connexion
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+}
+
+func containsDigit(s string) bool {
+	r := regexp.MustCompile("[0-9]")
+	return r.MatchString(s)
+}
+
+func containsLetter(s string) bool {
+	r := regexp.MustCompile("[a-zA-Z]")
+	return r.MatchString(s)
+}
+
+func containsSpecialChar(s string) bool {
+	r := regexp.MustCompile(`[!@#$%^&*()_+{}[\]:;<>,.?/~]`)
+	return r.MatchString(s)
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +115,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extraire les données du formulaire
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -84,7 +123,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
 
-	// Vérifier les informations de connexion dans la base de données
 	db, err := sql.Open("sqlite3", "BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -100,31 +138,26 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Vérifier si le mot de passe correspond
-	if storedPassword != password {
+	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
+	if err != nil {
 		http.Error(w, "Nom d'utilisateur ou mot de passe incorrect", http.StatusUnauthorized)
 		return
 	}
 
-	// Rediriger l'utilisateur vers la page de succès
-	http.Redirect(w, r, "/success", http.StatusSeeOther)
-}
-
-func Success(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Connexion réussie!")
+	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
 }
 
 func main() {
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
+	http.HandleFunc("/lobby", Lobby)
 	http.HandleFunc("/handle-register", HandleRegister)
 	http.HandleFunc("/handle-login", HandleLogin)
-	http.HandleFunc("/success", Success)
 
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	fmt.Println("Server running on port 8080")
+	fmt.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
