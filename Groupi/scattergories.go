@@ -7,12 +7,9 @@ import(
 	websocket"github.com/gorilla/websocket"
 	"math/rand"
 	"time"
-	"regexp"
-
-		"encoding/json"
+	"encoding/json"
 	
 )
-
 
 
 //boucle de jeu {
@@ -32,9 +29,20 @@ import(
 // affiche un tableau de score 
 // buton replay --> to new lobby
 
+type BackData struct {
+    Event string `json:"event"`
+    Data  []string    `json:"data"`
+}
 
 
-
+func parseEventData(data []byte) (*BackData, error) {
+    var event BackData
+    err := json.Unmarshal(data, &event)
+    if err != nil {
+        return nil, err
+    }
+    return &event, nil
+}
 
 
 func getRandomLetter() string {
@@ -141,7 +149,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 	sendRandomLetter(room)
 	//if id user === chef de la room pour evite les saut de timer {
 		go bouclTimer(room)
-var tabOfResult []string
 	// Check if message
     for {
         _, p, err := conn.ReadMessage()
@@ -153,12 +160,13 @@ var tabOfResult []string
             return
         }
         
-        // Afficher le message reçu
-        fmt.Printf("Message reçu de la connexion %p : %s\n", conn, p)
+		donnee, err := parseEventData(p)
+		if err != nil {
+			fmt.Println("Erreur lors de la conversion des données:", err)
+			return
+		}
 
-	
-
-			if string(p)=="end" {
+			if donnee.Event =="end" {
 				tabCatchData := struct {
 					Event string `json:"event"`
 					r  int    `json:"r"`
@@ -180,22 +188,13 @@ var tabOfResult []string
 						delete(room.Connections, conn)
 					}
 				}
-			}else{
+			}else if donnee.Event == "catchBackData"{
 				if 1==1 {
+					fmt.Println(donnee.Data)
+						
 					
-					re := regexp.MustCompile(`""`)
-					correspondances := re.FindAllStringSubmatch(string(p), -1)
-					var tabOf []string
-					for _, match := range correspondances {
-						tabOf = append(tabOf, match[1])
-					}
-					
-					
-					userPseudo := "nomDuJoueur"
-					tabOfResult = make([]string, len(tabOf)+1)
-					copy(tabOfResult[1:], tabOf)
-					tabOfResult[0] = userPseudo
-					fmt.Println(tabOfResult)
+					// userPseudo := "nomDuJoueur"
+
 					
 					
 					// chef envoit l'id de de joueur qui doit envoyer c'est reponse

@@ -31,11 +31,7 @@
           <td><input type="text" name="instru" id="instru" required /></td>
           <td><input type="text" name="feat" id="feat" required /></td>
           <td>
-            <input
-              type="button"
-              value="Fini"
-              onclick="end()"
-            />
+            <input type="button" value="Fini" onclick="end()" />
           </td>
         </tr>
       </tbody>
@@ -52,47 +48,53 @@
         var data = JSON.parse(event.data);
         console.log(data);
 
-
-        if (data.event=="fetchData") {
-          collectAndSendValues()
-
-        }else if (data.event=="timer"){
+        if (data.event == "fetchData") {
+          collectAndSendValues();
+        } else if (data.event == "timer") {
           var timer = document.getElementById("timer");
-          timer.textContent=data.time
-
-        } else if (data.event == "letter"){
+          timer.textContent = data.time;
+        } else if (data.event == "letter") {
           var lettre = document.getElementById("lettre");
           lettre.textContent = data.lettre;
-
         }
       };
 
       function collectAndSendValues() {
+        const dataToSend = {
+          Event: "catchBackData",
+          Data: [],
+        };
         var inputs = document.querySelectorAll('input[type="text"]');
-        var values = [];
         inputs.forEach(function (input) {
-          values.push(input.value);
+          dataToSend.Data.push(input.value);
         });
         if (ws.readyState === WebSocket.OPEN) {
-          console.log(JSON.stringify(values));
-          ws.send(JSON.stringify(values));
+          ws.send(JSON.stringify(dataToSend));
         } else {
           console.error("WebSocket is not open.");
         }
+
+
       }
       function end() {
         var inputs = document.querySelectorAll('input[type="text"]');
         var lettre = document.getElementById("lettre");
         var good = true;
         inputs.forEach(function (input) {
-          if (input.value.charAt(0).toLowerCase() !== lettre.textContent.toLowerCase()) {
+          if (
+            input.value.charAt(0).toLowerCase() !==
+            lettre.textContent.toLowerCase()
+          ) {
             good = false;
           }
         });
+        const dataToSend = {
+          Event: "end",
+          Data: [],
+        };
         if (good) {
           if (ws.readyState === WebSocket.OPEN) {
-            console.log();
-            ws.send("end");
+            ws.send(JSON.stringify(dataToSend));
           } else {
             console.error("WebSocket is not open.");
           }
