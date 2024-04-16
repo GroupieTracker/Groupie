@@ -6,7 +6,7 @@
     <title>Document</title>
 </head>
 <body>
-    <form action="/Home" method="post">
+    <form action="/lobby" method="post">
         <h1>home</h1>
         <input type="submit">
     </form>
@@ -18,7 +18,7 @@
         </h1>
     
         <script>
-            var ws = new WebSocket("ws://localhost:8080/goBlindTest/webs");
+            var ws = new WebSocket("ws://10.70.6.24:8080/BlindTest/webs");
     
             ws.onmessage = function(event) {
                 var messageList = document.getElementById("messageList");

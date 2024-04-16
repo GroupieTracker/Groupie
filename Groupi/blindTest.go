@@ -15,10 +15,15 @@ var (
     upgrader = websocket.Upgrader{
         ReadBufferSize:  1024,
         WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool { 
+			return true
+		},
     }
     rooms       = make(map[string]*Room) // Carte pour stocker toutes les rooms
     mutex       = sync.Mutex{}           // Mutex pour la synchronisation lors de la gestion des connexions
 )
+
+
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	// Récupère l'identifiant de la room à partir des paramètres de la requête
