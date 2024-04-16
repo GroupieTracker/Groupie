@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="game">
+            <h2>BlindTest</h2>
+            <p>BlindTest est un jeu de quiz musical où les joueurs doivent deviner le titre ou l'artiste d'une chanson en écoutant un extrait de celle-ci. Testez vos connaissances musicales et défiez vos amis pour voir qui peut reconnaître le plus de chansons!</p>
+            <form action="/BlindTest" method="post">
+                <button type="submit">Jouer</button>
+            </form>
+        </div>
+        <div class="game">
+            <h2>DeafTest</h2>
+            <p>DeafTest est un jeu de quiz visuel où les joueurs doivent deviner le mot ou la phrase représenté(e) par une série d'images. Utilisez votre sens de l'observation et de la déduction pour résoudre les énigmes et battre vos adversaires!</p>
+            <form action="/GuessTheSong" method="post">
+            <button type="submit">Jouer</button>
+        </form>
+        </div>
+        <div class="game">
+            <h2>Petit BAC</h2>
+            <p>Petit BAC est un jeu de mots où les joueurs doivent trouver des mots commençant par une lettre spécifique dans différentes catégories telles que "Pays", "Animaux", "Objets", etc. Soyez rapide et créatif pour marquer des points et remporter la victoire!</p>
+            <form action="/Scattergories?room=dfghj" method="post">
+                <button type="submit">Jouer</button>
+            </form>
+        </div>
+</body>
+</html>

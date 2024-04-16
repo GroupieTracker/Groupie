@@ -1,5 +1,0 @@
-package Groupi
-
-func AddRoom()  {
-	
-}
