@@ -23,7 +23,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./static/register.html")
+	data := struct {
+		Error string
+	}{}
+	tmpl, err := template.ParseFiles("static/register.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, data)
 }
 
 func Lobby(w http.ResponseWriter, r *http.Request) {
@@ -121,7 +129,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	username := r.Form.Get("username")
+	usernameOrEmail := r.Form.Get("username")
 	password := r.Form.Get("password")
 
 	db, err := sql.Open("sqlite3", "BDD.db")
@@ -132,7 +140,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var storedPassword string
-	row := db.QueryRow("SELECT password FROM USER WHERE pseudo = ?", username)
+	row := db.QueryRow("SELECT password FROM USER WHERE pseudo = ? OR email = ?", usernameOrEmail, usernameOrEmail)
 	err = row.Scan(&storedPassword)
 	if err != nil {
 		http.Error(w, "Nom d'utilisateur ou mot de passe incorrect", http.StatusUnauthorized)
@@ -206,6 +214,9 @@ func main() {
 
 	fsCSS := http.FileServer(http.Dir("static/css"))
 	http.Handle("/static/css/", http.StripPrefix("/static/css/", fsCSS))
+
+	fsPicture := http.FileServer(http.Dir("static/assets/pictures"))
+	http.Handle("/static/assets/pictures/", http.StripPrefix("/static/assets/pictures/", fsPicture))
 
 	fmt.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
