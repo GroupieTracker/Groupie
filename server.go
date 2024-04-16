@@ -256,8 +256,13 @@ func main() {
 			fmt.Println("Erreur lors de la création du jeu:", err)
 			return
 		}
+		userID, err := getUserIDByUsername(db, username)
+		if err != nil {
+			fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
+			return
+		}
 		newRoom := Room{
-			CreatedBy:  11,
+			CreatedBy:  userID,
 			MaxPlayers: nbPlayer,
 			Name:       nameRooms,
 			GameID:     gameID,

@@ -67,3 +67,18 @@ func CreateGameAndGetID(db *sql.DB, game Game) (int, error) {
 
     return int(id), nil
 }
+
+
+func GetUserIDByUsername(db *sql.DB, username string) (int, error) {
+    var userID int
+    query := "SELECT id FROM USER WHERE pseudo = ?"
+    err := db.QueryRow(query, username).Scan(&userID)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return 0, fmt.Errorf("l'utilisateur avec le pseudo %s n'existe pas", username)
+        }
+        return 0, err
+    }
+
+    return userID, nil
+}
