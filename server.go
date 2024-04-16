@@ -7,14 +7,12 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"regexp"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
+
+	Groupi"Groupi/Groupi"
 )
-
-
-
 
 func Home(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/index.html")
@@ -93,7 +91,6 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w,nil)
 
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
 }
@@ -111,15 +108,6 @@ func containsLetter(s string) bool {
 func containsSpecialChar(s string) bool {
 	r := regexp.MustCompile(`[!@#$%^&*()_+{}[\]:;<>,.?/~]`)
 	return r.MatchString(s)
-}
-
-
-func GOLobbyOfScattergories()  {
-	//Creation d'une nouvelle party 
-	//type petiti bac 
-	//REcupere L'id de l'useur et le mais en t'en que createur
-
-
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -141,17 +129,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w,nil)
-}
-func 	GoScattergories(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./pages/scattergories.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	tmpl.Execute(w,nil)
-}
-
 	defer db.Close()
 
 	var storedPassword string
@@ -171,34 +148,107 @@ func 	GoScattergories(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+func GoBlindTest(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./pages/blindTest.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w,nil)
+}
+
+
+func GOLobbyOfScattergories()  {
+	//Creation d'une nouvelle party 
+	//type petiti bac 
+	//REcupere L'id de l'useur et le mais en t'en que createur
+
+
+}
+
+func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./pages/guessTheSong.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w,nil)
+}
+func 	GoScattergories(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./pages/scattergories.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w,nil)
+}
+
+
+
 func main() {
-    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        Home(w, r)
-    })
-
-    // URL pour le rendu de la page du blind test
-    http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
-        GoBlindTest(w, r)
-    })
-
-	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
-        GoGuessTheSong(w, r)
-    })
-	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
-    	GoScattergories(w, r)
-    })
-
-	
-    http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
-	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
-	http.HandleFunc("/Scattergories/webs",Groupi.WsScattergories)
-
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
 	http.HandleFunc("/handle-register", HandleRegister)
 	http.HandleFunc("/handle-login", HandleLogin)
+// 
+http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
+http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
+http.HandleFunc("/Scattergories/webs",Groupi.WsScattergories)
+// URL pour le rendu de la page du blind test
+http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
+	GoBlindTest(w, r)
+})
+http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
+	GoGuessTheSong(w, r)
+})
+http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
+	GoScattergories(w, r)
+})
+// 
+
+
 
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
