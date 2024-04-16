@@ -7,18 +7,23 @@
 </head>
 <body>
 
-    <!--
-        //pour le chef
-        
-        Si l'id de l'useur et celui  du chef inteface 
-    pour changé 
-    //temps
-    //round
-    //nb de joueur
+    <h2>Creation d'une room petit bac</h2>
 
-//pour tous 
-    puis la liste des persone acteuelemtn dans la rooms prét a joué 
- -->
+    <form action="/RuleForScattergories" method="post">
+
+        <input type="text" id="name" name="name">
+        <label for="name">name</label>
+
+        <input type="text" id="nbPlayer"name="nbPlayer">
+        <label for="nbPlayer">Nombre de joueur max</label>
+
+        <input type="text" id="time" name="time">
+        <label for="time">temps / tours</label>
+        
+        <input type="text" id="nbRound" name="nbRound">
+        <label for="nbRound">Nombre de tours</label>
+        <input type="submit">
+    </form>
     
 </body>
 </html>

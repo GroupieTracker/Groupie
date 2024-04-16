@@ -7,12 +7,14 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 
 	Groupi "Groupi/Groupi"
 )
+
 
 func Home(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/index.html")
@@ -124,7 +126,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
 
-	db, err := sql.Open("sqlite3", "BDD.db")
+	db, err := sql.Open("sqlite3", "./BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -156,14 +158,6 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, nil)
 }
-
-func GOLobbyOfScattergories() {
-	//Creation d'une nouvelle party
-	//type petiti bac
-	//REcupere L'id de l'useur et le mais en t'en que createur
-
-}
-
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./static/guessTheSong.html")
 	if err != nil {
@@ -181,16 +175,49 @@ func GoScattergories(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
+func ruleScattergories( r *http.Request) (string,int,int,int) {
+	if r.Method == http.MethodPost {
+		err := r.ParseForm()
+		if err != nil {
+			fmt.Println(err)
+		}
+		name := r.FormValue("name")
+		fmt.Println(r.FormValue("nbPlayer"))
+		nbPlayer,_ := strconv.Atoi( r.FormValue("nbPlayer"))
+		time ,_:=  strconv.Atoi(r.FormValue("time"))
+		round,_ := strconv.Atoi( r.FormValue("nbRound"))
+		fmt.Println(name, nbPlayer, time, round)
+		return name, nbPlayer ,time , round
+		
+	}
+	return "",-1,-1,-1
+}
+
+func GoLobScattergories(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/lobbyScattergories.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
+}
+
 func main() {
+	var time int
+	var nbRound int
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
 	http.HandleFunc("/handle-register", HandleRegister)
 	http.HandleFunc("/handle-login", HandleLogin)
+
+
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
-	http.HandleFunc("/Scattergories/webs", Groupi.WsScattergories)
+	http.HandleFunc("/LobScattergories", GoLobScattergories)
+
+
 	// URL pour le rendu de la page du blind test
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
@@ -198,6 +225,39 @@ func main() {
 	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
 		GoGuessTheSong(w, r)
 	})
+	http.HandleFunc("/Scattergories/webs", func(w http.ResponseWriter, r *http.Request) {
+		Groupi.WsScattergories(w, r,time,nbRound)
+	})
+
+	http.HandleFunc("/RuleForScattergories", func(w http.ResponseWriter, r *http.Request) {
+		db, err := sql.Open("sqlite3", "./BDD.db")
+		defer db.Close()
+		nameRooms,nbPlayer,ti,nbRo:=ruleScattergories(r)
+		time=ti
+		nbRound=nbRo
+		newGame := Game{
+			Name: nameRooms,
+		}
+		gameID, err := CreateGameAndGetID(db, newGame)
+		if err != nil {
+			fmt.Println("Erreur lors de la création du jeu:", err)
+			return
+		}
+		newRoom := Room{
+			CreatedBy:  11,
+			MaxPlayers: nbPlayer,
+			Name:       nameRooms,
+			GameID:     gameID,
+		}
+		roomID, err := CreateRoomAndGetID(db, newRoom)
+		id := strconv.Itoa(roomID)
+
+
+		http.Redirect(w, r, "/Scattergories?room="+id, http.StatusSeeOther)
+		
+	})
+
+
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
 		GoScattergories(w, r)
 	})

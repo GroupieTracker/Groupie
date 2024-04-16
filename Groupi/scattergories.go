@@ -7,11 +7,29 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
+	"sync"	
 
 	websocket"github.com/gorilla/websocket"
+	_ "github.com/mattn/go-sqlite3"
 )
 
+type Room struct {
+    ID          string
+    Connections map[*websocket.Conn]bool
+}
 
+var (
+    upgrader = websocket.Upgrader{
+        ReadBufferSize:  1024,
+        WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool { 
+			return true
+		},
+    }
+    rooms       = make(map[string]*Room)
+    mutex       = sync.Mutex{}   
+	// db    *sql.DB    
+)
 
 type BackData struct {
 	Event string   `json:"event"`
@@ -59,8 +77,7 @@ func sendRandomLetter(room *Room) {
 	}
 }
 
-func bouclTimer(room *Room) {
-	timeForRound := 10
+func bouclTimer(room *Room ,timeForRound int) {
 	// gere l'arre de la manche si le temsp arrive a 0
 	for {
 		sendTimer(room, timeForRound)
@@ -94,8 +111,15 @@ func sendTimer(room *Room, time int) {
 	}
 }
 
-func WsScattergories(w http.ResponseWriter, r *http.Request) {
-  round := 5
+func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  int) {
+	// var err error
+	// db, err = sql.Open("sqlite3", "./../BDD.db")
+	// if err != nil {
+	// 	log.Fatal("Error opening database:", err)
+	// }
+	// defer db.Close()
+
+	// loadRoomsFromDB()
 	// Récupère l'identifiant de la room à partir des paramètres de la requête
 	roomID := r.URL.Query().Get("room")
 	if roomID == "" {
@@ -127,7 +151,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 		//init start of round
 		sendRandomLetter(room)
 		//if id user === chef de la room pour evite les saut de timer {
-		go bouclTimer(room)
+		go bouclTimer(room , time)
 		// Check if message
 		for {
 			_, p, err := conn.ReadMessage()
@@ -211,8 +235,23 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func displayAnswer()  {
 
+// func loadRoomsFromDB() {
+// 	rows, err := db.Query("SELECT id FROM ROOMS")
+// 	if err != nil {
+// 		log.Fatal("Error querying rooms:", err)
+// 	}
+// 	defer rows.Close()
 
-  
-}
+// 	for rows.Next() {
+// 		var roomID int
+// 		if err := rows.Scan(&roomID); err != nil {
+// 			log.Println("Error scanning room ID:", err)
+// 			continue
+// 		}
+// 		rooms[roomID] = &Room{ID: roomID, Connections: make(map[*websocket.Conn]bool)}
+// 	}
+// 	if err := rows.Err(); err != nil {
+// 		log.Fatal("Error iterating rooms rows:", err)
+// 	}
+// }
