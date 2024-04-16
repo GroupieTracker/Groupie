@@ -169,39 +169,41 @@ func WsScattergories(w http.ResponseWriter, r *http.Request) {
 				}
 			} else if donnee.Event == "catchBackData" {
 				answer  = donnee.Data
-			
+				fmt.Println(answer)
+				
 
 					// chef envoit l'id de de joueur qui doit envoyer c'est reponse
           
 
-          } else if 1==1{
+          } else if (1==1){ 
           // if idUser==idUser {
           // 	send(tabOfResult)
           // }
 
-          var tabToSend []any{"nomUser"}
-          tabToSend = append(tabToSend, answer)
-          tabCatchData := struct {
-            Event string `json:"event"`
-            Answer   int    `json:"answer"`
-          }{
-            Event: "Answer",
-            Answer:   tabToSend,
-          }
-          data, err := json.Marshal(tabCatchData)
-          if err != nil {
-            fmt.Println("Erreur de marshalling JSON:", err)
-            return
-          }
+        //   var tabToSend []interface{}
+		// tabToSend = append(tabToSend, "nomUser")
+        //   tabToSend = append(tabToSend, answer)
+        //   tabCatchData := struct {
+        //     Event string `json:"event"`
+        //     Answer   []interface    `json:"answer"`
+        //   }{
+        //     Event: "Answer",
+        //     Answer:   tabToSend,
+        //   }
+        //   data, err := json.Marshal(tabCatchData)
+        //   if err != nil {
+        //     fmt.Println("Erreur de marshalling JSON:", err)
+        //     return
+        //   }
   
-          for conn := range room.Connections {
-            err := conn.WriteMessage(websocket.TextMessage, []byte(data))
-            if err != nil {
-              log.Println("Error writing message:", err)
-              conn.Close()
-              delete(room.Connections, conn)
-            }
-          }
+        //   for conn := range room.Connections {
+        //     err := conn.WriteMessage(websocket.TextMessage, []byte(data))
+        //     if err != nil {
+        //       log.Println("Error writing message:", err)
+        //       conn.Close()
+        //       delete(room.Connections, conn)
+        //     }
+        //   }
 					//envoyer ses données
 				}
 			}
