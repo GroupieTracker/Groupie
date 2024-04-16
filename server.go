@@ -161,7 +161,6 @@ func GOLobbyOfScattergories() {
 	//Creation d'une nouvelle party
 	//type petiti bac
 	//REcupere L'id de l'useur et le mais en t'en que createur
-
 }
 
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
@@ -191,7 +190,7 @@ func main() {
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/Scattergories/webs", Groupi.WsScattergories)
-	// URL pour le rendu de la page du blind test
+
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
@@ -201,10 +200,9 @@ func main() {
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
 		GoScattergories(w, r)
 	})
-	//
 
 	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.Handle("/static/", http.StripPrefix("static/", fs))
 
 	fsCSS := http.FileServer(http.Dir("static/css"))
 	http.Handle("/static/css/", http.StripPrefix("/static/css/", fsCSS))
