@@ -32,16 +32,16 @@ func Lobby(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/lobby.html")
 }
 
-func HandleRegister(w http.ResponseWriter, r *http.Request) {
+func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-		return
+		return "err"
 	}
 
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return "err"
 	}
 	username := r.Form.Get("new_pseudo")
 	email := r.Form.Get("new_email")
@@ -56,16 +56,16 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("static/register.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return "err"
 		}
 		tmpl.Execute(w, data)
-		return
+		return "err"
 	}
 
 	db, err := sql.Open("sqlite3", "BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return "err"
 	}
 	defer db.Close()
 
@@ -74,27 +74,28 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	err = row.Scan(&count)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return"err"
 	}
 
 	if count > 0 {
 		http.Error(w, "Nom d'utilisateur déjà utilisé", http.StatusBadRequest)
-		return
+		return "err"
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Erreur lors du hachage du mot de passe", http.StatusInternalServerError)
-		return
+		return "err"
 	}
 
 	_, err = db.Exec("INSERT INTO USER (pseudo, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return "err"
 	}
 
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+	return username
 }
 
 func containsDigit(s string) bool {
@@ -112,16 +113,16 @@ func containsSpecialChar(s string) bool {
 	return r.MatchString(s)
 }
 
-func HandleLogin(w http.ResponseWriter, r *http.Request) {
+func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-		return
+		return "err"
 	}
 
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return "err"
 	}
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
@@ -129,7 +130,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("sqlite3", "./BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return "err"
 	}
 	defer db.Close()
 
@@ -138,16 +139,17 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	err = row.Scan(&storedPassword)
 	if err != nil {
 		http.Error(w, "Nom d'utilisateur ou mot de passe incorrect", http.StatusUnauthorized)
-		return
+		return "err"
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
 	if err != nil {
 		http.Error(w, "Nom d'utilisateur ou mot de passe incorrect", http.StatusUnauthorized)
-		return
+		return "err"
 	}
 
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+	return username
 }
 
 func GoBlindTest(w http.ResponseWriter, r *http.Request) {
@@ -205,20 +207,31 @@ func GoLobScattergories(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var time int
 	var nbRound int
+	var username string
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
-	http.HandleFunc("/handle-register", HandleRegister)
-	http.HandleFunc("/handle-login", HandleLogin)
-
-
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
 
+	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
+		username=HandleLogin(w, r)
+		if username == "err"{
+			fmt.Println("err in login func")
+		}
+		fmt.Println(username)
+	})
+	http.HandleFunc("/handle-register", func(w http.ResponseWriter, r *http.Request) {
+		username=HandleRegister(w, r)
+		if username == "err"{
+			fmt.Println("err in login func")
+		}
+		fmt.Println(username)
+	})
 
-	// URL pour le rendu de la page du blind test
+	
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
