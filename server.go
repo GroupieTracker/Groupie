@@ -158,6 +158,9 @@ func main() {
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
+	fsCSS := http.FileServer(http.Dir("static/css"))
+	http.Handle("/static/css/", http.StripPrefix("/static/css/", fsCSS))
+
 	fmt.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
