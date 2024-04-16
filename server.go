@@ -10,6 +10,9 @@ import (
 )
 
 
+
+
+
 func Home(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./index.html")
 	if err != nil {
@@ -25,14 +28,17 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// tab := []string{"Bonjour", "mon", "ami"}
-	// if str!="" {
-		
-	// 	tab = append(tab, str)
-	// }
 	tmpl.Execute(w,nil)
 }
 
+
+func GOLobbyOfScattergories()  {
+	//Creation d'une nouvelle party 
+	//type petiti bac 
+	//REcupere L'id de l'useur et le mais en t'en que createur
+
+
+}
 
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./pages/guessTheSong.html")
@@ -42,8 +48,14 @@ func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w,nil)
 }
-
-
+func 	GoScattergories(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./pages/scattergories.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w,nil)
+}
 
 
 func main() {
@@ -52,16 +64,22 @@ func main() {
     })
 
     // URL pour le rendu de la page du blind test
-    http.HandleFunc("/goBlindTest", func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
         GoBlindTest(w, r)
     })
 
-	http.HandleFunc("/goGuessTheSong", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
         GoGuessTheSong(w, r)
     })
-  
-    http.HandleFunc("/goBlindTest/webs", Groupi.WsBlindTest)
-	http.HandleFunc("/goGuessTheSong/webs", Groupi.WsGuessTheSong)
+	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
+    	GoScattergories(w, r)
+    })
+
+	
+    http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
+	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
+	http.HandleFunc("/Scattergories/webs",Groupi.WsScattergories)
+
 
 
     // Serveur de fichiers statiques

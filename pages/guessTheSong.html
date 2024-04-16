@@ -16,7 +16,11 @@
         <ul id="messageList"></ul>
     
         <script>
-            var ws = new WebSocket("ws://localhost:8080/goGuessTheSong/webs");
+             var params = new URLSearchParams(window.location.search);
+      var roomID = params.get("room");
+      var ws = new WebSocket(
+        "ws://10.70.6.24:8080/GuessTheSong/webs?room=" + roomID
+      );
     
             ws.onmessage = function(event) {
                 var messageList = document.getElementById("messageList");
@@ -26,7 +30,7 @@
             };
     
             function sendMessage() {
-                var messageInput = document.getElementById("messageInput");
+                var messageInput = document.getElementById("messageInput"); 
                 var message = messageInput.value;
                 ws.send(message);
                 messageInput.value = "";
