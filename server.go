@@ -56,18 +56,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func autoplaySpotifyTrack() {
-	randomSpotifyTrack := Track
 
-	// Start playback of the random track
-	err := spotifyClient.PlayOpt(&spotify.PlayOptions{
-		URIs: []spotify.URI{spotify.URI(randomSpotifyTrack)},
-	})
-	if err != nil {
-		log.Println("Error starting playback:", err)
-		return
-	}
-}
 
 func ChangeMusic(w http.ResponseWriter, r *http.Request) {
 Start:
