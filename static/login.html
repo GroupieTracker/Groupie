@@ -17,6 +17,9 @@
             <input type="submit"></input>
             <p class="message">Aucun Compte <a href="register">Créer un compte</a></p>
         </form>
+        {{ if .Error }}
+                <p class="error">{{ .Error }}</p>
+        {{ end }}
     </div>
 </body>
 </html>

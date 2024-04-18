@@ -66,42 +66,46 @@ form {
 
 label {
     font-size: 16px;
-    color: #636f77; /* Couleur du texte du label */
+    color: #636f77; 
     margin-bottom: 8px;
 }
 
 input {
     padding: 10px;
     margin-bottom: 16px;
-    border: 1px solid #cfbbee; /* Couleur de la bordure */
+    border: 1px solid #cfbbee; 
     border-radius: 5px;
     font-size: 16px;
 }
 
 input[type="submit"] {
-    background-color: #422d88; /* Couleur de fond du bouton */
-    color: #fff; /* Couleur du texte du bouton */
+    background-color: #422d88;
+    color: #fff;
     border: none;
     cursor: pointer;
 }
 
 input[type="submit"]:hover {
-    background-color: #de4444; /* Couleur de fond du bouton au survol */
+    background-color: #de4444;
 }
 
 .message {
     text-align: center;
-    color: #636f77; /* Couleur du texte secondaire */
+    color: #636f77;
 }
 
 .message a {
-    color: #422d88; /* Couleur du lien */
+    color: #422d88;
+}
+
+.error {
+    color: var(--tertiary-color);
 }
 
 .container-game {
     display: flex;
-    width: 100vw; /* Utilisation de la largeur totale de la fenêtre */
-    height: 100vh; /* Utilisation de la hauteur totale de la fenêtre */
+    width: 100vw;
+    height: 100vh;
 }
 
 .game {
@@ -112,7 +116,7 @@ input[type="submit"]:hover {
     cursor: pointer;
     background-size: cover;
     background-position: center;
-    height: 100%; /* Remplir la hauteur de la fenêtre */
+    height: 100%;
 }
 
 .game:hover {
@@ -168,3 +172,4 @@ input[type="submit"]:hover {
     border-radius: 5px;
     cursor: pointer;
 }
+

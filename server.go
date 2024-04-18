@@ -53,57 +53,77 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	email := r.Form.Get("new_email")
 	password := r.Form.Get("new_password")
 
-	if len(password) < 8 || !containsDigit(password) || !containsLetter(password) || !containsSpecialChar(password) {
-		data := struct {
-			Error string
-		}{
-			Error: "Le mot de passe doit contenir au moins 8 caractères, inclure au moins un chiffre, une lettre et un caractère spécial",
-		}
-		tmpl, err := template.ParseFiles("static/register.html")
+	var userError string
+
+	if len(password) < 12 || !containsNumber(password) || !containsLetter(password) || !containsSpecialChar(password) {
+		userError = "Le mot de passe doit contenir au moins 12 caractères, inclure au moins un chiffre, une lettre et un caractère spécial"
+	} else {
+		db, err := sql.Open("sqlite3", "BDD.db")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		tmpl.Execute(w, data)
-		return
-	}
+		defer db.Close()
 
-	db, err := sql.Open("sqlite3", "BDD.db")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
+		var count int
+		row := db.QueryRow("SELECT COUNT(*) FROM USER WHERE pseudo = ?", username)
+		err = row.Scan(&count)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	var count int
-	row := db.QueryRow("SELECT COUNT(*) FROM USER WHERE pseudo = ?", username)
-	err = row.Scan(&count)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+		var count1 int
+		row1 := db.QueryRow("SELECT COUNT(*) FROM USER WHERE email = ?", email)
+		err = row1.Scan(&count1)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	if count > 0 {
-		http.Error(w, "Nom d'utilisateur déjà utilisé", http.StatusBadRequest)
-		return
-	}
+		if count1 > 0 {
+			userError = "Cette adresse mail est déjà utilisé"
+		} else if count > 0 {
+			userError = "Ce nom d'utilisateur est déjà utilisé"
+		} else {
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+			if err != nil {
+				http.Error(w, "MDP pas hasher", http.StatusInternalServerError)
+				return
+			}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		http.Error(w, "Erreur lors du hachage du mot de passe", http.StatusInternalServerError)
-		return
-	}
+			_, err = db.Exec("INSERT INTO USER (pseudo, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-	_, err = db.Exec("INSERT INTO USER (pseudo, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+			http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+			return
+		}
 	}
-
-	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+	registerError(w, userError)
 }
 
-func containsDigit(s string) bool {
+func registerError(w http.ResponseWriter, userError string) {
+	tmpl, err := template.ParseFiles("static/register.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	data := struct {
+		Error string
+	}{
+		Error: userError,
+	}
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func containsNumber(s string) bool {
 	r := regexp.MustCompile("[0-9]")
 	return r.MatchString(s)
 }
@@ -143,17 +163,31 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	row := db.QueryRow("SELECT password FROM USER WHERE pseudo = ? OR email = ?", usernameOrEmail, usernameOrEmail)
 	err = row.Scan(&storedPassword)
 	if err != nil {
-		http.Error(w, "Nom d'utilisateur ou mot de passe incorrect", http.StatusUnauthorized)
+		loginError(w, "Nom d'utilisateur ou mot de passe incorrect")
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
 	if err != nil {
-		http.Error(w, "Nom d'utilisateur ou mot de passe incorrect", http.StatusUnauthorized)
+		loginError(w, "Nom d'utilisateur ou mot de passe incorrect")
 		return
 	}
 
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+}
+
+func loginError(w http.ResponseWriter, userError string) {
+	tmpl, err := template.ParseFiles("static/login.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, struct{ Error string }{Error: userError})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func GoBlindTest(w http.ResponseWriter, r *http.Request) {

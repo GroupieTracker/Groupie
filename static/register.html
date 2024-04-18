@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Creer un compte</h1>
+        <h1>Créer un compte</h1>
         <form action="/handle-register" method="post">
             <label for="new_pseudo">Nom d'utilisateur :</label>
             <input type="text" id="new_pseudo" name="new_pseudo" required>
@@ -20,7 +20,11 @@
             <input type="password" id="new_password" name="new_password" required>
 
             <input type="submit" value="Register">
-            <p class="message">Deja un Compte <a href="login">Se connecter</a></p>
+            <p class="message">Déjà un Compte <a href="login">Se connecter</a></p>
+
+            {{ if .Error }}
+                <p class="error">{{ .Error }}</p>
+            {{ end }}
         </form>
     </div>
 </body>
