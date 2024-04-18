@@ -168,13 +168,13 @@ func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, nil)
 }
-func GoScattergories(w http.ResponseWriter, r *http.Request) {
+func GoScattergories(w http.ResponseWriter, r *http.Request , username string) {
 	tmpl, err := template.ParseFiles("./static/scattergories.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, username)
 }
 
 func ruleScattergories( r *http.Request) (string,int,int,int) {
@@ -188,7 +188,6 @@ func ruleScattergories( r *http.Request) (string,int,int,int) {
 		nbPlayer,_ := strconv.Atoi( r.FormValue("nbPlayer"))
 		time ,_:=  strconv.Atoi(r.FormValue("time"))
 		round,_ := strconv.Atoi( r.FormValue("nbRound"))
-		fmt.Println(name, nbPlayer, time, round)
 		return name, nbPlayer ,time , round
 		
 	}
@@ -221,14 +220,14 @@ func main() {
 		if username == "err"{
 			fmt.Println("err in login func")
 		}
-		fmt.Println(username)
+		
 	})
 	http.HandleFunc("/handle-register", func(w http.ResponseWriter, r *http.Request) {
 		username=HandleRegister(w, r)
 		if username == "err"{
 			fmt.Println("err in login func")
 		}
-		fmt.Println(username)
+		
 	})
 
 	
@@ -276,7 +275,7 @@ func main() {
 
 
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
-		GoScattergories(w, r)
+		GoScattergories(w, r , username)
 	})
 	//
 

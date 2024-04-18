@@ -166,3 +166,18 @@ func AddRoomUser(db *sql.DB ,roomID int, userID int) error {
 
     return nil
 }
+
+func UpdateRoomUserScore(db *sql.DB ,roomID, userID, scoreToAdd int) error {
+   
+    var currentScore int
+    err := db.QueryRow("SELECT score FROM ROOM_USERS WHERE id_room = ? AND id_user = ?", roomID, userID).Scan(&currentScore)
+    if err != nil {
+        return err
+    }
+    newScore := currentScore + scoreToAdd
+    _, err = db.Exec("UPDATE ROOM_USERS SET score = ? WHERE id_room = ? AND id_user = ?", newScore, roomID, userID)
+    if err != nil {
+        return err
+    }
+    return nil
+}
