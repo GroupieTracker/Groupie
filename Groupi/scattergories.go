@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 	"sync"	
+	"strconv"
 
 	websocket"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
@@ -80,10 +81,9 @@ func sendRandomLetter(room *Room) {
 
 func bouclTimer(room *Room ,timeForRound int) {
 	// gere l'arre de la manche si le temsp arrive a 0
-
+	timeactu:=timeForRound
 	for {
-		sendTimer(room, timeForRound)
-		timeactu:=timeForRound
+		sendTimer(room, timeactu)
 		timeactu = timeactu - 1
 		if timeactu<0{
 			endStart(room)
@@ -119,7 +119,7 @@ func sendTimer(room *Room, time int) {
 
 func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  int , username string) {
 	var err error
-	db, err := sql.Open("sqlite3", "./../BDD.db")
+	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
 		log.Fatal("Error opening database:", err)
 	}
@@ -129,7 +129,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 	roomID := r.URL.Query().Get("room")
 	room, ok := rooms[roomID]
 	if !ok {
-    // Crée une nouvelle room si elle n'existe pas
 		room = &Room{
       ID:          roomID,
 			Connections: make(map[*websocket.Conn]bool),
@@ -138,7 +137,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-    log.Println("Error upgrading to WebSocket:", err)
+    log.Println("Error upgrading to WebSocket: l 141", err)
 		return
 	}
 	defer conn.Close()
@@ -148,15 +147,16 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 
 	iDCreatorOfRoom ,err := GetRoomCreatorID(db , roomID)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket:", err)
+		log.Println("Error upgrading to WebSocket: l 151", err)
 			return
 		}
 	userID,err := GetUserIDByUsername(db,username)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket:", err)
+		log.Println("Error upgrading to WebSocket: l156", err)
 			return
 		}
- 
+		roomIDInt, _ := strconv.Atoi(roomID)
+ AddRoomUser(db ,roomIDInt ,userID)
   	var answer []string
 	  idDataBack:= 0
 	for i := 0; i < round; i++ {
@@ -166,7 +166,8 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 			return
 		}
 		idDataBack= 0
-		if userID == iDCreatorOfRoom {
+		fmt.Println(userID ,iDCreatorOfRoom )
+		if userID == iDCreatorOfRoom{
 
 			sendRandomLetter(room)
 				go bouclTimer(room , time)
@@ -191,23 +192,27 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 				endStart(room)
 				
 			} else if donnee.Event == "catchBackData" {
-			
 				answer  = donnee.Data 
-				if userID == usersIDs[idDataBack] {
-					usernameOfData,err:=GetUsernameByID(db ,usersIDs[idDataBack])
-					if err != nil {
-						fmt.Println("Erreur lors de la conversion des données:", err)
-						return
+				fmt.Println(donnee.Event ,answer , idDataBack , userID, usersIDs)
+				if len(usersIDs) > idDataBack {
+
+					if userID == usersIDs[idDataBack] {
+						usernameOfData,err:=GetUsernameByID(db ,usersIDs[idDataBack])
+						if err != nil {
+							fmt.Println("Erreur lors de la conversion des données:", err)
+							return
+						}
+						sendAnswer(room ,answer,usernameOfData)
 					}
-					sendAnswer(room ,answer,usernameOfData)
+					idDataBack++
 				}
-				idDataBack++
 				
 
 					// chef envoit l'id de de joueur qui doit envoyer c'est reponse
           
 
           }
+		  donnee.Event="none"
 			}
 		
 	}

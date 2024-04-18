@@ -254,15 +254,15 @@ func main() {
 		gameID, err := Groupi.CreateGameAndGetID(db, newGame)
 		if err != nil {
 			fmt.Println("Erreur lors de la création du jeu:", err)
+		
 			return
 		}
 		userID, err := Groupi.GetUserIDByUsername(db, username)
-		fmt.Println(userID)
 		if err != nil {
 			fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
 			return
 		}
-		newRoom := Groupi.Rooms{
+		newRoom := Groupi.Roomms{
 			CreatedBy:  userID,
 			MaxPlayers: nbPlayer,
 			Name:       nameRooms,

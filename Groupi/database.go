@@ -13,7 +13,7 @@ type Game struct {
     Name string
 }
 
-type Rooms struct {
+type Roomms struct {
     ID         int
     CreatedBy  int
     MaxPlayers int
@@ -42,7 +42,7 @@ func InitializeDatabase() {
 	log.Println("Tables créées avec succès dans la base de données.")
 }
 
-func CreateRoomAndGetID(db *sql.DB, room Rooms) (int, error) {
+func CreateRoomAndGetID(db *sql.DB, room Roomms) (int, error) {
     query := "INSERT INTO ROOMS (created_by, max_player, name, id_game) VALUES (?, ?, ?, ?)"
     result, err := db.Exec(query, room.CreatedBy, room.MaxPlayers, room.Name, room.GameID)
     if err != nil {
@@ -112,6 +112,7 @@ func GetUsersInRoom(db *sql.DB, roomID string) ([]int, error) {
 
     rows, err := db.Query("SELECT id_user FROM ROOM_USERS WHERE id_room = ?", roomID)
     if err != nil {
+
         return nil, err
     }
     defer rows.Close()
@@ -119,11 +120,13 @@ func GetUsersInRoom(db *sql.DB, roomID string) ([]int, error) {
     for rows.Next() {
         var userID int
         if err := rows.Scan(&userID); err != nil {
+            
             return nil, err
         }
         userIDs = append(userIDs, userID)
     }
     if err := rows.Err(); err != nil {
+        
         return nil, err
     }
 
@@ -137,6 +140,7 @@ func GetRoomCreatorID(db *sql.DB , roomID string) (int, error) {
 
     err := db.QueryRow("SELECT created_by FROM ROOMS WHERE id = ?", roomID).Scan(&creatorID)
     if err != nil {
+        fmt.Println("paric")
         return 0, err
     }
 
@@ -152,4 +156,13 @@ func GetUsernameByID(db *sql.DB , userID int) (string, error) {
     }
 
     return username, nil
+}
+
+func AddRoomUser(db *sql.DB ,roomID int, userID int) error {
+    _, err := db.Exec("INSERT INTO ROOM_USERS (id_room, id_user, score) VALUES (?, ?, ?)", roomID, userID, 0)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }

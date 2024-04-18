@@ -39,55 +39,55 @@
       <div class="artiste">
         <div class="prop">ici</div>
         <label>
-          <input type="radio" name="vraiOuFaux" value="vrai" />
+          <input type="radio" name="artiste" value="vrai" />
           <span> Correct</span>
         </label>
         <label>
-          <input type="radio" name="vraiOuFaux" value="faux" />
+          <input type="radio" name="artiste" value="faux" />
           <span> Incorect </span>
         </label>
       </div>
       <div class="album">
         <div class="prop">ici</div>
         <label>
-          <input type="radio" name="vraiOuFaux" value="vrai" />
+          <input type="radio" name="album" value="vrai" />
           <span> Correct</span>
         </label>
         <label>
-          <input type="radio" name="vraiOuFaux" value="faux" />
+          <input type="radio" name="album" value="faux" />
           <span> Incorect </span>
         </label>
       </div>
       <div class="group">
         <div class="prop">ici</div>
         <label>
-          <input type="radio" name="vraiOuFaux" value="vrai" />
+          <input type="radio" name="group" value="vrai" />
           <span> Correct</span>
         </label>
         <label>
-          <input type="radio" name="vraiOuFaux" value="faux" />
+          <input type="radio" name="group" value="faux" />
           <span> Incorect </span>
         </label>
       </div>
       <div class="instru">
         <div class="prop">ici</div>
         <label>
-          <input type="radio" name="vraiOuFaux" value="vrai" />
+          <input type="radio" name="instru" value="vrai" />
           <span> Correct</span>
         </label>
         <label>
-          <input type="radio" name="vraiOuFaux" value="faux" />
+          <input type="radio" name="instru" value="faux" />
           <span> Incorect </span>
         </label>
       </div>
       <div class="feat">
         <div class="prop">ici</div>
         <label>
-          <input type="radio" name="vraiOuFaux" value="vrai" />
+          <input type="radio" name="feat" value="vrai" />
           <span> Correct</span>
         </label>
         <label>
-          <input type="radio" name="vraiOuFaux" value="faux" />
+          <input type="radio" name="feat" value="faux" />
           <span> Incorect </span>
         </label>
       </div>
@@ -95,6 +95,9 @@
     <ul id="messageList"></ul>
 
     <script>
+      const gameDiv = document.querySelector(".game");
+      const resulDiv = document.querySelector(".resul");
+      resulDiv.style.display = "none";
       var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
       var ws = new WebSocket(
@@ -109,25 +112,29 @@
           var timer = document.getElementById("timer");
           timer.textContent = data.time;
         } else if (data.event == "letter") {
+          resulDiv.style.display = "none";
+          gameDiv.style.display = "block";
           var lettre = document.getElementById("lettre");
           lettre.textContent = data.lettre;
         } else if (data.event.includes("dataOf")) {
           var elemt = document.querySelectorAll(".prop");
           elemt.forEach(function (element) {
+            resulDiv.style.display = "none";
+            gameDiv.style.display = "block";
             if (element.parentNode.classList.contains("artiste")) {
-              element.textContent=data.answer[0]
+              element.textContent = data.answer[0];
             }
             if (element.parentNode.classList.contains("album")) {
-              element.textContent=data.answer[1]
+              element.textContent = data.answer[1];
             }
             if (element.parentNode.classList.contains("group")) {
-              element.textContent=data.answer[2]
+              element.textContent = data.answer[2];
             }
             if (element.parentNode.classList.contains("instru")) {
-              element.textContent=data.answer[3]
+              element.textContent = data.answer[3];
             }
             if (element.parentNode.classList.contains("feat")) {
-              element.textContent=data.answer[4]
+              element.textContent = data.answer[4];
             }
           });
         }
@@ -149,8 +156,6 @@
         }
       }
       function end() {
-
-
         var inputs = document.querySelectorAll('input[type="text"]');
         var lettre = document.getElementById("lettre");
         var good = true;
@@ -175,7 +180,19 @@
         }
       }
 
+      function scrore() {
+        const radioButtons = document.querySelectorAll('input[type="radio"]');
+        let score = 0;
+        radioButtons.forEach((button) => {
+          button.addEventListener("change", function () {
+            if (this.value === "vrai") {
+              score++;
       
+            
+            }
+          });
+        });
+      }
     </script>
   </body>
 </html>
