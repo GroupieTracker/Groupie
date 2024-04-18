@@ -1,8 +1,9 @@
-package main
+package Groupi
 
 import (
 	"database/sql"
 	"log"
+    "fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -12,7 +13,7 @@ type Game struct {
     Name string
 }
 
-type Room struct {
+type Rooms struct {
     ID         int
     CreatedBy  int
     MaxPlayers int
@@ -41,7 +42,7 @@ func InitializeDatabase() {
 	log.Println("Tables créées avec succès dans la base de données.")
 }
 
-func CreateRoomAndGetID(db *sql.DB, room Room) (int, error) {
+func CreateRoomAndGetID(db *sql.DB, room Rooms) (int, error) {
     query := "INSERT INTO ROOMS (created_by, max_player, name, id_game) VALUES (?, ?, ?, ?)"
     result, err := db.Exec(query, room.CreatedBy, room.MaxPlayers, room.Name, room.GameID)
     if err != nil {
@@ -81,4 +82,74 @@ func GetUserIDByUsername(db *sql.DB, username string) (int, error) {
     }
 
     return userID, nil
+}
+func DeleteRoomAndRoomUsersByID(db *sql.DB, roomID int) error {
+    tx, err := db.Begin()
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback() 
+    queryDeleteRoom := "DELETE FROM ROOMS WHERE id = ?"
+    _, err = tx.Exec(queryDeleteRoom, roomID)
+    if err != nil {
+        return err
+    }
+    queryDeleteRoomUsers := "DELETE FROM ROOM_USERS WHERE id_room = ?"
+    _, err = tx.Exec(queryDeleteRoomUsers, roomID)
+    if err != nil {
+        return err
+    }
+    err = tx.Commit()
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+
+func GetUsersInRoom(db *sql.DB, roomID string) ([]int, error) {
+    var userIDs []int
+
+    rows, err := db.Query("SELECT id_user FROM ROOM_USERS WHERE id_room = ?", roomID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var userID int
+        if err := rows.Scan(&userID); err != nil {
+            return nil, err
+        }
+        userIDs = append(userIDs, userID)
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return userIDs, nil
+}
+
+
+
+func GetRoomCreatorID(db *sql.DB , roomID string) (int, error) {
+    var creatorID int
+
+    err := db.QueryRow("SELECT created_by FROM ROOMS WHERE id = ?", roomID).Scan(&creatorID)
+    if err != nil {
+        return 0, err
+    }
+
+    return creatorID, nil
+}
+
+func GetUsernameByID(db *sql.DB , userID int) (string, error) {
+    var username string
+
+    err := db.QueryRow("SELECT pseudo FROM USER WHERE id = ?", userID).Scan(&username)
+    if err != nil {
+        return "", err
+    }
+
+    return username, nil
 }

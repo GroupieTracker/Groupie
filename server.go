@@ -62,7 +62,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		return "err"
 	}
 
-	db, err := sql.Open("sqlite3", "BDD.db")
+	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return "err"
@@ -127,7 +127,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
 
-	db, err := sql.Open("sqlite3", "./BDD.db")
+	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return "err"
@@ -213,7 +213,7 @@ func main() {
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
-	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
+	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong )
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
@@ -239,38 +239,37 @@ func main() {
 		GoGuessTheSong(w, r)
 	})
 	http.HandleFunc("/Scattergories/webs", func(w http.ResponseWriter, r *http.Request) {
-		Groupi.WsScattergories(w, r,time,nbRound)
+		Groupi.WsScattergories(w, r,time,nbRound, username)
 	})
 
 	http.HandleFunc("/RuleForScattergories", func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite3", "./BDD.db")
+		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 		defer db.Close()
 		nameRooms,nbPlayer,ti,nbRo:=ruleScattergories(r)
 		time=ti
 		nbRound=nbRo
-		newGame := Game{
+		newGame := Groupi.Game{
 			Name: nameRooms,
 		}
-		gameID, err := CreateGameAndGetID(db, newGame)
+		gameID, err := Groupi.CreateGameAndGetID(db, newGame)
 		if err != nil {
 			fmt.Println("Erreur lors de la création du jeu:", err)
 			return
 		}
-		userID, err := getUserIDByUsername(db, username)
+		userID, err := Groupi.GetUserIDByUsername(db, username)
+		fmt.Println(userID)
 		if err != nil {
 			fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
 			return
 		}
-		newRoom := Room{
+		newRoom := Groupi.Rooms{
 			CreatedBy:  userID,
 			MaxPlayers: nbPlayer,
 			Name:       nameRooms,
 			GameID:     gameID,
 		}
-		roomID, err := CreateRoomAndGetID(db, newRoom)
+		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
 		id := strconv.Itoa(roomID)
-
-
 		http.Redirect(w, r, "/Scattergories?room="+id, http.StatusSeeOther)
 		
 	})
