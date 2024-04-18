@@ -244,7 +244,7 @@ func sendAnswer(room *Room , answer []string , username string){
 		Answer     []string    `json:"answer"`
 		}{
 			Event: "dataOf"+username,
-			Answer:    answer,
+			Answer:    answer , 
 		}
 		data, err := json.Marshal(tabCatchData)
 		if err != nil {
