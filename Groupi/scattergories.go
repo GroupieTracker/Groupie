@@ -1,37 +1,36 @@
 package Groupi
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"database/sql"
 	"log"
 	"math/rand"
 	"net/http"
-	"time"
-	"sync"	
 	"strconv"
-	// "strings"
+	"sync"
+	"time"
+"sort"
 
-	websocket"github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Room struct {
-    ID          string
-    Connections map[*websocket.Conn]bool
+	ID          string
+	Connections map[*websocket.Conn]bool
 }
 
 var (
-    upgrader = websocket.Upgrader{
-        ReadBufferSize:  1024,
-        WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool { 
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
-    }
-    rooms       = make(map[string]*Room)
-    mutex       = sync.Mutex{}   
-	// db    *sql.DB    
+	}
+	rooms = make(map[string]*Room)
+	mutex = sync.Mutex{}
 )
 
 type BackData struct {
@@ -53,8 +52,19 @@ func getRandomLetter() string {
 	randomIndex := rand.Intn(len(letters))
 	return letters[randomIndex]
 }
+func bouclTimer(room *Room, timeForRound int) {
+	timeactu := timeForRound
+	for {
+		sendTimer(room, timeactu)
+		timeactu = timeactu - 1
+		if timeactu <= 0 {
+			endStart(room)
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
 
-func sendRandomLetter(room *Room)  string{
+func sendRandomLetter(room *Room) string {
 	letter := getRandomLetter()
 	tabLettre := struct {
 		Event  string `json:"event"`
@@ -80,29 +90,15 @@ func sendRandomLetter(room *Room)  string{
 	}
 	return letter
 }
-
-func bouclTimer(room *Room ,timeForRound int) {
-	// gere l'arre de la manche si le temsp arrive a 0
-	timeactu:=timeForRound
-	for {
-		sendTimer(room, timeactu)
-		timeactu = timeactu - 1
-		if timeactu<=0{
-			endStart(room)
-		}
-		time.Sleep(1 * time.Second)
-	}
-}
-
 func sendTimer(room *Room, time int) {
-	tabTime := struct {
+	tabId := struct {
 		Event string `json:"event"`
 		Time  int    `json:"time"`
 	}{
 		Event: "timer",
 		Time:  time,
 	}
-	data, err := json.Marshal(tabTime)
+	data, err := json.Marshal(tabId)
 	if err != nil {
 		fmt.Println("Erreur de marshalling JSON:", err)
 		return
@@ -119,13 +115,38 @@ func sendTimer(room *Room, time int) {
 	}
 }
 
-func sendId(room *Room,conn *websocket.Conn,  userID int) {
+
+func sendScores(room *Room, scores [][]string) {
+	tabscores := struct {
+		Event string `json:"event"`
+		Scores  [][]string    `json:"scores"`
+	}{
+		Event: "scoresData",
+		Scores:  scores,
+	}
+	data, err := json.Marshal(tabscores)
+	if err != nil {
+		fmt.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			log.Println("Error writing message:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+}
+func sendId(room *Room, conn *websocket.Conn, userID int) {
 	tabId := struct {
 		Event string `json:"event"`
-		Id  int    `json:"id"`
+		Id    int    `json:"id"`
 	}{
 		Event: "id",
-		Id:  userID,
+		Id:    userID,
 	}
 	data, err := json.Marshal(tabId)
 	if err != nil {
@@ -142,7 +163,10 @@ func sendId(room *Room,conn *websocket.Conn,  userID int) {
 	}
 
 }
-func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  int , username string) {
+
+
+
+func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int, username string) {
 	var err error
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
@@ -150,19 +174,18 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 	}
 	defer db.Close()
 
-	// Récupère l'identifiant de la room à partir des paramètres de la requête
 	roomID := r.URL.Query().Get("room")
 	room, ok := rooms[roomID]
 	if !ok {
 		room = &Room{
-      ID:          roomID,
+			ID:          roomID,
 			Connections: make(map[*websocket.Conn]bool),
 		}
 		rooms[roomID] = room
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-    log.Println("Error upgrading to WebSocket: l 141", err)
+		log.Println("Error upgrading to WebSocket: l 141", err)
 		return
 	}
 	defer conn.Close()
@@ -170,35 +193,50 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 	room.Connections[conn] = true
 	mutex.Unlock()
 
-	
-	iDCreatorOfRoom ,err := GetRoomCreatorID(db , roomID)
+	iDCreatorOfRoom, err := GetRoomCreatorID(db, roomID)
 	if err != nil {
 		log.Println("Error upgrading to WebSocket: l 151", err)
-			return
-		}
-	userID,err := GetUserIDByUsername(db,username)
-	sendId(room , conn ,userID)
+		return
+	}
+	userID, err := GetUserIDByUsername(db, username)
+	sendId(room, conn, userID)
 	if err != nil {
 		log.Println("Error upgrading to WebSocket: l156", err)
+		return
+	}
+	roomIDInt, _ := strconv.Atoi(roomID)
+	AddRoomUser(db, roomIDInt, userID)
+
+	var answer []string
+	var lettre string
+	var tabAnswer [][]string
+	var tabNul [][]string
+
+	for i := 0; i < round; i++ {
+		usersIDs, _ := GetUsersInRoom(db, roomID)
+		userScores,err :=GetUserScoresForRoom(db , usersIDs , roomIDInt)
+		if err != nil {
+			fmt.Println("Erreur lors de la get scores:", err)
 			return
 		}
-		roomIDInt, _ := strconv.Atoi(roomID)
- 		AddRoomUser(db ,roomIDInt ,userID)
-  		var answer []string
+		sort.Slice(userScores, func(i, j int) bool {
+			return userScores[i][1] < userScores[j][1]
+		})
+		fmt.Println(userScores)
+		sendScores(room , userScores)
 
-	 var lettre string
-	  var tabAnswer [][]string
-	for i := 0; i < round; i++ {
+		tabAnswer=tabNul
+		
 		if err != nil {
 			fmt.Println("Erreur lors de la conversion des données:", err)
 			return
 		}
-		
-		if userID == iDCreatorOfRoom{
 
-		lettre=sendRandomLetter(room)
-				go bouclTimer(room , time)
-			}
+		if userID == iDCreatorOfRoom {
+
+			lettre = sendRandomLetter(room)
+			go bouclTimer(room, time)
+		}
 		for {
 			_, p, err := conn.ReadMessage()
 			if err != nil {
@@ -217,34 +255,30 @@ func WsScattergories(w http.ResponseWriter, r *http.Request , time int , round  
 
 			if donnee.Event == "end" {
 				endStart(room)
-				
-			} else if donnee.Event == "catchBackData" {
-				if userID == iDCreatorOfRoom{
 
+			} else if donnee.Event == "catchBackData" {
+				if userID == iDCreatorOfRoom {
+
+					answer = donnee.Data
+					tabAnswer = append(tabAnswer, answer)
 					
-						answer  = donnee.Data 
-						tabAnswer = append(tabAnswer, answer)
-						usersIDs,_:=GetUsersInRoom(db , roomID)
-						if len(tabAnswer)==len(usersIDs) {
-							addScore(answer ,lettre , roomIDInt , userID , db)
-							break
-						}
-							}
-						
-						}
-					
-					
+					if len(tabAnswer) == len(usersIDs) {
+						addScore(tabAnswer, lettre, roomIDInt, userID, db)
+						break
+					}
 				}
 			}
-			}
+		}
+	}
+}
 
-func endStart(room *Room)  {
+func endStart(room *Room) {
 	tabCatchData := struct {
 		Event string `json:"event"`
 		r     int    `json:"r"`
 	}{
 		Event: "fetchData",
-		r:    -1,
+		r:     -1,
 	}
 	data, err := json.Marshal(tabCatchData)
 	if err != nil {
@@ -260,39 +294,38 @@ func endStart(room *Room)  {
 			delete(room.Connections, conn)
 		}
 	}
-	
+
 }
 
+func addScore(tabAnswer [][]string, lettre string, roomIDInt int, userID int, db *sql.DB) {
+	fmt.Println("tab", tabAnswer,"|")
+	// [[82=iduser O o o fez fezf]] 
 
+	unique := true
+	for i := 0; i < len(tabAnswer); i++ {
+		score := 0
+		for y := 1; y <= 5; y++ {
+			if string(tabAnswer[i][y]) == "" {
+				score += 0
+			} else {
+				for o := 0; o < len(tabAnswer); o++ {
+					if string(tabAnswer[i][y]) == string(tabAnswer[o][y]) && o != i {
+						unique = false
+					}
+				}
+				if unique {
+					score += 2
+				} else {
+					score += 1
+				}
 
-func addScore(tabAnswer []string,lettre string ,roomIDInt int , userID int , db *sql.DB)  {
-						fmt.Println("tab" , tabAnswer , string(tabAnswer[0][1]))
-						unique := true
-						for i := 0; i < len(tabAnswer); i++ {
-							score:=0
-							for y := 1; y <= 5; y++ {
-								// if !(strings.HasPrefix( strings.ToLower(string(tabAnswer[i][y])), lettre )){
-									if string(tabAnswer[i][y]) =="" {
-									score+=0
-									}else{  
-										for o := 0; o < len(tabAnswer); o++ {
-											if string(tabAnswer[i][y]) == string(tabAnswer[o][y]) && o!=i{
-												unique = false
-											}
-										}
-										if unique {
-											score+=2
-											}else{
-												score+=1
-											}
-											
-										}
-									}
-									
-									err := UpdateRoomUserScore(db , roomIDInt, userID, score)
-									if err != nil {
-										fmt.Println("Erreur lors de la conversion des données:", err)
-										return
-									}
-								}
+			}
+		}
+
+		err := UpdateRoomUserScore(db, roomIDInt, userID, score)
+		if err != nil {
+			fmt.Println("Erreur lors de la conversion des données:", err)
+			return
+		}
+	}
 }

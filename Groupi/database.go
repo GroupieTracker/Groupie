@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
     "fmt"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -180,4 +181,36 @@ func UpdateRoomUserScore(db *sql.DB ,roomID, userID, scoreToAdd int) error {
         return err
     }
     return nil
+}
+func GetUserScoresForRoom(db *sql.DB ,userIDs []int, roomID int) ([][]string, error) {
+    var userScores [][]string
+    var userIDsStr string
+    for i, userID := range userIDs {
+        if i > 0 {
+            userIDsStr += ","
+        }
+        userIDsStr += strconv.Itoa(userID)
+    }
+    query := `
+        SELECT u.pseudo, ru.score
+        FROM USER u
+        INNER JOIN ROOM_USERS ru ON u.id = ru.id_user
+        WHERE ru.id_user IN (` + userIDsStr + `) AND ru.id_room = ?`
+    rows, err := db.Query(query, roomID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    for rows.Next() {
+        var username string
+        var score int
+        if err := rows.Scan(&username, &score); err != nil {
+            return nil, err
+        }
+        userScores = append(userScores, []string{username, strconv.Itoa(score)})
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+    return userScores, nil
 }

@@ -8,6 +8,7 @@
   <body>
     <div id="timer">Timer</div>
     <div id="lettre">Lettre</div>
+    <div class="scor"></div>
     <table class="game">
       <thead>
         <tr>
@@ -32,14 +33,14 @@
       </tbody>
     </table>
     <script>
-      var id ;
+      var id;
       var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
+      const scor = document.querySelector(".scor");
       var ws = new WebSocket(
         "ws://10.70.6.24:8080/Scattergories/webs?room=" + roomID
       );
       ws.onmessage = function (event) {
-      
         var data = JSON.parse(event.data);
         console.log(data);
         if (data.event == "fetchData") {
@@ -50,8 +51,23 @@
         } else if (data.event == "letter") {
           var lettre = document.getElementById("lettre");
           lettre.textContent = data.lettre;
-        }else if (data.event = "id"){
-          id = data.id
+        } else if ((data.event == "id")) {
+          id = data.id;
+        } else if (data.event == "scoresData") {
+        
+          while (scor.firstChild) {
+            scor.removeChild(scor.firstChild);
+          }
+          var scores = data.scores
+          console.log(scores);
+          scores.forEach(user => {
+            const pseudo = document.createElement("div");
+            pseudo.textContent = user[0];
+            const scored = document.createElement("div");
+            scored.textContent = user[1];
+            scor.appendChild(pseudo);
+            scor.appendChild(scored)
+        });
         }
       };
 
@@ -60,7 +76,7 @@
           Event: "catchBackData",
           Data: [],
         };
-        
+
         dataToSend.Data.push(String(id));
         var inputs = document.querySelectorAll('input[type="text"]');
         inputs.forEach(function (input) {
@@ -96,7 +112,6 @@
           }
         }
       }
-
     </script>
   </body>
 </html>
