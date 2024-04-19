@@ -184,7 +184,6 @@ func ruleScattergories( r *http.Request) (string,int,int,int) {
 			fmt.Println(err)
 		}
 		name := r.FormValue("name")
-		fmt.Println(r.FormValue("nbPlayer"))
 		nbPlayer,_ := strconv.Atoi( r.FormValue("nbPlayer"))
 		time ,_:=  strconv.Atoi(r.FormValue("time"))
 		round,_ := strconv.Atoi( r.FormValue("nbRound"))

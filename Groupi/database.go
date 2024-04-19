@@ -214,3 +214,14 @@ func GetUserScoresForRoom(db *sql.DB ,userIDs []int, roomID int) ([][]string, er
     }
     return userScores, nil
 }
+
+func GetMaxPlayersForRoom(db *sql.DB ,roomID int) (int, error) {
+    var maxPlayers int
+
+    err := db.QueryRow("SELECT max_player FROM ROOMS WHERE id = ?", roomID).Scan(&maxPlayers)
+    if err != nil {
+        return 0, err
+    }
+
+    return maxPlayers, nil
+}
