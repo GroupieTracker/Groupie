@@ -16,10 +16,10 @@
             <input type="password" id="password" name="password" required><br><br>
             <input type="submit"></input>
             <p class="message">Aucun Compte <a href="register">Créer un compte</a></p>
-        </form>
-        {{ if .Error }}
+            {{ if .Error }}
                 <p class="error">{{ .Error }}</p>
-        {{ end }}
+            {{ end }}
+        </form>
     </div>
 </body>
 </html>

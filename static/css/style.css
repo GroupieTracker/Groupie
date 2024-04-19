@@ -1,10 +1,8 @@
 :root {
     --primary-color: #422d88;
-    --secondary-color: #fff5b0;
-    --tertiary-color: #de4444;
+    --secondary-color: #c1b0ff;
+    --tertiary-color: #dd5151;
     --text-color: #fff;
-    --button-bg-color: #fff;
-    --button-text-color: #333;
 }
 
 * {
@@ -15,7 +13,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-color: var(--primary-color);
+    background-color: var(--secondary-color);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -33,8 +31,8 @@ button {
     margin: 10px;
     font-size: 18px;
     border: none;
-    background-color: var(--button-bg-color);
-    color: var(--button-text-color);
+    background-color: var(--primary-color);
+    color: var(--text-color);
     cursor: pointer;
     border-radius: 5px;
     transition: background-color 0.3s;
@@ -44,8 +42,13 @@ button:hover {
     background-color: var(--tertiary-color);
 }
 
+.hidden-button {
+    display: none;
+}
+
+
 .container {
-    background-color: #fff5b0; 
+    background-color: var(--secondary-color); 
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -73,29 +76,29 @@ label {
 input {
     padding: 10px;
     margin-bottom: 16px;
-    border: 1px solid #cfbbee; 
+    border: 1px solid var(--secondary-color); 
     border-radius: 5px;
     font-size: 16px;
 }
 
 input[type="submit"] {
-    background-color: #422d88;
-    color: #fff;
+    background-color: var(--primary-color);
+    color: var(--text-color);
     border: none;
     cursor: pointer;
 }
 
 input[type="submit"]:hover {
-    background-color: #de4444;
+    background-color: var(--tertiary-color);
 }
 
 .message {
     text-align: center;
-    color: #636f77;
+    color: var(--text-color);
 }
 
 .message a {
-    color: #422d88;
+    color: var(--primary-color);
 }
 
 .error {
@@ -120,7 +123,7 @@ input[type="submit"]:hover {
 }
 
 .game:hover {
-    flex-grow: 2;
+    flex-grow: 1.2;
 }
 
 .game:before {
@@ -138,28 +141,6 @@ input[type="submit"]:hover {
     opacity: 0;
 }
 
-.game h2 {
-    color: var(--text-color);
-    text-align: center;
-    padding: 20px;
-    position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-}
-
-.game p {
-    color: var(--text-color);
-    text-align: center;
-    padding: 20px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-}
-
 .game button {
     position: absolute;
     bottom: 35%;
@@ -173,3 +154,20 @@ input[type="submit"]:hover {
     cursor: pointer;
 }
 
+#blindtest {
+    height: 100%;
+    width: 100%;
+    background-image: url("../assets/pictures/blindtest.png");
+}
+
+#deaftest {
+    height: 100%;
+    width: 100%;
+    background-image: url("../assets/pictures/deaftest.png");
+}
+
+#petit-bac {
+    height: 100%;
+    width: 100%;
+    background-image: url("../assets/pictures/petit-bac.png");
+}

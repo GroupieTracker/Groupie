@@ -19,7 +19,12 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./static/login.html")
+	tmpl, err := template.ParseFiles("static/login.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -149,6 +154,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	usernameOrEmail := r.Form.Get("username")
 	password := r.Form.Get("password")
 
@@ -183,7 +189,13 @@ func loginError(w http.ResponseWriter, userError string) {
 		return
 	}
 
-	err = tmpl.Execute(w, struct{ Error string }{Error: userError})
+	data := struct {
+		Error string
+	}{
+		Error: userError,
+	}
+
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
