@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -15,10 +16,20 @@ import (
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
+	if isAuthenticated(r) {
+		http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+		return
+	}
+
 	http.ServeFile(w, r, "./static/index.html")
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	if isAuthenticated(r) {
+		http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+		return
+	}
+
 	tmpl, err := template.ParseFiles("static/login.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -28,6 +39,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
+	if isAuthenticated(r) {
+		http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+		return
+	}
+
 	data := struct {
 		Error string
 	}{}
@@ -179,7 +195,31 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	expiration := time.Now().Add(24 * time.Hour)
+	cookieName := "auth_token"
+	cookieValue := usernameOrEmail
+	cookie := http.Cookie{
+		Name:     cookieName,
+		Value:    cookieValue,
+		Expires:  expiration,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &cookie)
+
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+}
+
+func isAuthenticated(r *http.Request) bool {
+	cookie, err := r.Cookie("auth_token")
+	if err != nil {
+		return false
+	}
+
+	if cookie.Value != "" {
+		return true
+	}
+
+	return false
 }
 
 func loginError(w http.ResponseWriter, userError string) {
@@ -200,6 +240,20 @@ func loginError(w http.ResponseWriter, userError string) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	// Supprimer le cookie d'authentification en fixant sa date d'expiration à une date antérieure
+	expiration := time.Now().AddDate(0, 0, -1)
+	cookie := http.Cookie{
+		Name:    "auth_token",
+		Value:   "",
+		Expires: expiration,
+	}
+	http.SetCookie(w, &cookie)
+
+	// Rediriger l'utilisateur vers la page de connexion
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func GoBlindTest(w http.ResponseWriter, r *http.Request) {
@@ -244,6 +298,7 @@ func main() {
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/Scattergories/webs", Groupi.WsScattergories)
+	http.HandleFunc("/logout", Logout)
 
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)

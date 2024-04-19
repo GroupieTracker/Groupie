@@ -171,3 +171,13 @@ input[type="submit"]:hover {
     width: 100%;
     background-image: url("../assets/pictures/petit-bac.png");
 }
+
+.logout-icon {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    color: white;
+    cursor: pointer;
+    font-size: 24px;
+    z-index: 2;
+}
