@@ -4,30 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lobby</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const games = document.querySelectorAll('.game');
+            games.forEach(function(game) {
+                game.addEventListener('click', function() {
+                    const form = game.querySelector('form');
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
 </head>
 <body>
-    <div class="container">
-        <div class="game">
-            <h2>BlindTest</h2>
-            <p>BlindTest est un jeu de quiz musical où les joueurs doivent deviner le titre ou l'artiste d'une chanson en écoutant un extrait de celle-ci. Testez vos connaissances musicales et défiez vos amis pour voir qui peut reconnaître le plus de chansons!</p>
+    <a href="/logout"><span class="material-symbols-outlined logout-icon">logout</span></a>
+    <div class="container-game">
+        <div class="game" id="blindtest">
             <form action="/BlindTest" method="post">
-                <button type="submit">Jouer</button>
+                <button class="hidden-button" type="submit">Jouer</button>
             </form>
         </div>
-        <div class="game">
-            <h2>DeafTest</h2>
-            <p>DeafTest est un jeu de quiz visuel où les joueurs doivent deviner le mot ou la phrase représenté(e) par une série d'images. Utilisez votre sens de l'observation et de la déduction pour résoudre les énigmes et battre vos adversaires!</p>
+        <div class="game" id="deaftest">
             <form action="/GuessTheSong" method="post">
-            <button type="submit">Jouer</button>
-        </form>
-        </div>
-        <div class="game">
-            <h2>Petit BAC</h2>
-            <p>Petit BAC est un jeu de mots où les joueurs doivent trouver des mots commençant par une lettre spécifique dans différentes catégories telles que "Pays", "Animaux", "Objets", etc. Soyez rapide et créatif pour marquer des points et remporter la victoire!</p>
-            <form action="/LobScattergories" method="post">
-                <button type="submit">Jouer</button>
+                <button class="hidden-button" type="submit">Jouer</button>
             </form>
         </div>
+        <div class="game" id="petit-bac">
+            <form action="/Scattergories?room=dfghj" method="post">
+                <button class="hidden-button" type="submit">Jouer</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
