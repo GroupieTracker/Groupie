@@ -1,36 +1,24 @@
 package main
 
 import (
-	"Groupi/Groupi"
 	"database/sql"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"regexp"
-	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
-)
 
-// Structure pour stocker les informations sur l'utilisateur
-type User struct {
-	Username string
-	Email    string
-}
+	Groupi "Groupi/Groupi"
+)
 
 func Home(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/index.html")
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	// Vérifie si l'utilisateur est déjà connecté
-	if isAuthenticated(r) {
-		http.Redirect(w, r, "/lobby", http.StatusSeeOther)
-		return
-	}
-
 	tmpl, err := template.ParseFiles("static/login.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -191,16 +179,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Crée un cookie d'authentification pour l'utilisateur
-	expiration := time.Now().Add(24 * time.Hour)
-	cookie := http.Cookie{
-		Name:     "auth_token",
-		Value:    usernameOrEmail, // Vous pouvez utiliser une valeur unique ici
-		Expires:  expiration,
-		HttpOnly: true,
-	}
-	http.SetCookie(w, &cookie)
-
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
 }
 
@@ -224,14 +202,36 @@ func loginError(w http.ResponseWriter, userError string) {
 	}
 }
 
-func isAuthenticated(r *http.Request) bool {
-	// Vérifie si le cookie d'authentification est présent dans la requête
-	cookie, err := r.Cookie("auth_token")
+func GoBlindTest(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/blindTest.html")
 	if err != nil {
-		return false
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	// Si le cookie est présent, l'utilisateur est considéré comme authentifié
-	return true
+	tmpl.Execute(w, nil)
+}
+
+func GOLobbyOfScattergories() {
+	//Creation d'une nouvelle party
+	//type petiti bac
+	//REcupere L'id de l'useur et le mais en t'en que createur
+}
+
+func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/guessTheSong.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
+}
+func GoScattergories(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/scattergories.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
 }
 
 func main() {
