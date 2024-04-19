@@ -49,7 +49,7 @@ var (
 )
 
 func getRandomMusic() string {
-	loadSpotifyTracks("Groupi/assets/spotify_tracks.json")
+	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
 Start:
 	randomSpotifyTrack := spotifyTracks[rand.Intn(len(spotifyTracks))]
 	if Track == randomSpotifyTrack {
