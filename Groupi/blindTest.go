@@ -18,7 +18,7 @@ import (
 	websocket "github.com/gorilla/websocket"
 )
 
-var spotifyClient *spotify.Client
+var spotifyClient  *spotify.Client
 var spotifyTracks []string
 var Track string = "https://open.spotify.com/embed/track/2uqYupMHANxnwgeiXTZXzd?&autoplay=1"
 var Answer string
