@@ -243,7 +243,6 @@ func loginError(w http.ResponseWriter, userError string) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	// Supprimer le cookie d'authentification en fixant sa date d'expiration à une date antérieure
 	expiration := time.Now().AddDate(0, 0, -1)
 	cookie := http.Cookie{
 		Name:    "auth_token",
@@ -252,7 +251,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &cookie)
 
-	// Rediriger l'utilisateur vers la page de connexion
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
