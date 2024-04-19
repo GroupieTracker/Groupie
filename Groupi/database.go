@@ -1,4 +1,4 @@
-package main
+package Groupi
 
 import (
 	"database/sql"

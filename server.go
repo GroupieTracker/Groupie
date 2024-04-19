@@ -79,7 +79,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	if len(password) < 12 || !containsNumber(password) || !containsLetter(password) || !containsSpecialChar(password) {
 		userError = "Le mot de passe doit contenir au moins 12 caractères, inclure au moins un chiffre, une lettre et un caractère spécial"
 	} else {
-		db, err := sql.Open("sqlite3", "BDD.db")
+		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -174,7 +174,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	usernameOrEmail := r.Form.Get("username")
 	password := r.Form.Get("password")
 
-	db, err := sql.Open("sqlite3", "BDD.db")
+	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
