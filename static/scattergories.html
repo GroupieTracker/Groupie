@@ -3,17 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>PETIT BAC</title>
   </head>
   <body>
-    <form action="/lobby" method="post">
-      <h1>home</h1>
-      <input type="submit" />
-    </form>
-    <div id="timer">Timer</div>
-
-    <div id="lettre">Lettre</div>
-    <table>
+    <section class="waitingRoom">
+      <span>Nb de player </span><span class="nbPlayer"></span><span> sur </span><span class="maxPlayer"></span><span> max</span>
+      <div class="wait">
+      </div>
+    </section>
+    <section class="game">
+      <div id="timer">Timer</div>
+      <div id="lettre">Lettre</div>
+      <div class="scor"></div>
+      <table >
       <thead>
         <tr>
           <th>Artiste</th>
@@ -25,25 +27,41 @@
       </thead>
       <tbody>
         <tr>
-          <td><input type="text" name="artiste" id="artiste" required /></td>
-          <td><input type="text" name="album" id="album" required /></td>
-          <td><input type="text" name="group" id="group" required /></td>
-          <td><input type="text" name="instru" id="instru" required /></td>
-          <td><input type="text" name="feat" id="feat" required /></td>
+          <td><input type="text" name="artiste" /></td>
+          <td><input type="text" name="album" /></td>
+          <td><input type="text" name="group" /></td>
+          <td><input type="text" name="instru" /></td>
+          <td><input type="text" name="feat" /></td>
           <td>
             <input type="button" value="Fini" onclick="end()" />
           </td>
         </tr>
       </tbody>
     </table>
-    <ul id="messageList"></ul>
-
+  </section>
     <script>
+      var id;
       var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
+      const waitingRoom = document.querySelector(".waitingRoom")
+      const game = document.querySelector(".game")
+      game.style.display="none"
+      const scor = document.querySelector(".scor");
       var ws = new WebSocket(
         "ws://10.70.6.24:8080/Scattergories/webs?room=" + roomID
       );
+      function start(){
+        console.log("gogogogoogog");
+        const dataToSend = {
+          Event: "start",
+          Data: [],
+        };
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+        }
+      }
       ws.onmessage = function (event) {
         var data = JSON.parse(event.data);
         console.log(data);
@@ -55,6 +73,43 @@
         } else if (data.event == "letter") {
           var lettre = document.getElementById("lettre");
           lettre.textContent = data.lettre;
+          var inputs = document.querySelectorAll('input[type="text"]');
+          inputs.forEach(function (input) {
+            input.value = "";
+          });
+        } else if (data.event == "id") {
+          id = data.id;
+        } else if (data.event == "scoresData") {
+          while (scor.firstChild) {
+            scor.removeChild(scor.firstChild);
+          }
+          var scores = data.scores;
+          console.log(scores);
+          scores.forEach((user) => {
+            const pseudo = document.createElement("div");
+            pseudo.textContent = user[0];
+            const scored = document.createElement("div");
+            scored.textContent = user[1];
+            scor.appendChild(pseudo);
+            scor.appendChild(scored);
+          });
+        }else if (data.event=="waiting"){
+          const wait = document.querySelector(".wait")
+          document.querySelector(".nbPlayer").textContent=data.data[0]
+          document.querySelector(".maxPlayer").textContent=data.data[1]
+          if (id==data.data[2]){
+            while (wait.firstChild) {
+            wait.removeChild(wait.firstChild);
+          }
+          const start = document.createElement("button");
+          start.textContent="lancer la partie"
+          start.addEventListener("click",()=>{
+            game.style.display="block"
+            waitingRoom.style.display="none"
+            start()
+          })
+          wait.appendChild(start)
+          }
         }
       };
 
@@ -63,18 +118,21 @@
           Event: "catchBackData",
           Data: [],
         };
+
+        dataToSend.Data.push(String(id));
         var inputs = document.querySelectorAll('input[type="text"]');
         inputs.forEach(function (input) {
           dataToSend.Data.push(input.value);
         });
         if (ws.readyState === WebSocket.OPEN) {
+      
           ws.send(JSON.stringify(dataToSend));
         } else {
           console.error("WebSocket is not open.");
         }
-
-
       }
+     
+
       function end() {
         var inputs = document.querySelectorAll('input[type="text"]');
         var lettre = document.getElementById("lettre");
