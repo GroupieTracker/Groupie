@@ -16,7 +16,6 @@ import (
 	Groupi "Groupi/Groupi"
 )
 
-
 func Home(w http.ResponseWriter, r *http.Request) {
 	if isAuthenticated(r) {
 		http.Redirect(w, r, "/lobby", http.StatusSeeOther)
@@ -84,7 +83,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return "err"
 		}
 		defer db.Close()
 
@@ -93,7 +92,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		err = row.Scan(&count)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return "err"
 		}
 
 		var count1 int
@@ -101,7 +100,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		err = row1.Scan(&count1)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return "err"
 		}
 
 		if count1 > 0 {
@@ -112,17 +111,17 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 			if err != nil {
 				http.Error(w, "MDP pas hasher", http.StatusInternalServerError)
-				return
+				return "err"
 			}
 
 			_, err = db.Exec("INSERT INTO USER (pseudo, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return "err"
 			}
 
 			http.Redirect(w, r, "/lobby", http.StatusSeeOther)
-			return
+			return "err"
 		}
 	}
 	registerError(w, userError)
@@ -190,15 +189,21 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 	err = row.Scan(&storedPassword)
 	if err != nil {
 		loginError(w, "Nom d'utilisateur ou mot de passe incorrect")
-		return
+		return "err"
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
 	if err != nil {
 		loginError(w, "Nom d'utilisateur ou mot de passe incorrect")
-		return
+		return "err"
 	}
 
+
+	username, err := Groupi.GetUsernameByEmailOrUsername(db, usernameOrEmail)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return "err"
+	}
 	expiration := time.Now().Add(24 * time.Hour)
 	cookieName := "auth_token"
 	cookieValue := usernameOrEmail
@@ -211,52 +216,8 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 	http.SetCookie(w, &cookie)
 
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
+
 	return username
-}
-
-func isAuthenticated(r *http.Request) bool {
-	cookie, err := r.Cookie("auth_token")
-	if err != nil {
-		return false
-	}
-
-	if cookie.Value != "" {
-		return true
-	}
-
-	return false
-}
-
-func loginError(w http.ResponseWriter, userError string) {
-	tmpl, err := template.ParseFiles("static/login.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	data := struct {
-		Error string
-	}{
-		Error: userError,
-	}
-
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func Logout(w http.ResponseWriter, r *http.Request) {
-	expiration := time.Now().AddDate(0, 0, -1)
-	cookie := http.Cookie{
-		Name:    "auth_token",
-		Value:   "",
-		Expires: expiration,
-	}
-	http.SetCookie(w, &cookie)
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func isAuthenticated(r *http.Request) bool {
@@ -320,7 +281,7 @@ func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, nil)
 }
-func GoScattergories(w http.ResponseWriter, r *http.Request , username string) {
+func GoScattergories(w http.ResponseWriter, r *http.Request, username string) {
 	tmpl, err := template.ParseFiles("./static/scattergories.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -329,20 +290,20 @@ func GoScattergories(w http.ResponseWriter, r *http.Request , username string) {
 	tmpl.Execute(w, username)
 }
 
-func ruleScattergories( r *http.Request) (string,int,int,int) {
+func ruleScattergories(r *http.Request) (string, int, int, int) {
 	if r.Method == http.MethodPost {
 		err := r.ParseForm()
 		if err != nil {
 			fmt.Println(err)
 		}
 		name := r.FormValue("name")
-		nbPlayer,_ := strconv.Atoi( r.FormValue("nbPlayer"))
-		time ,_:=  strconv.Atoi(r.FormValue("time"))
-		round,_ := strconv.Atoi( r.FormValue("nbRound"))
-		return name, nbPlayer ,time , round
-		
+		nbPlayer, _ := strconv.Atoi(r.FormValue("nbPlayer"))
+		time, _ := strconv.Atoi(r.FormValue("time"))
+		round, _ := strconv.Atoi(r.FormValue("nbRound"))
+		return name, nbPlayer, time, round
+
 	}
-	return "",-1,-1,-1
+	return "", -1, -1, -1
 }
 
 func GoLobScattergories(w http.ResponseWriter, r *http.Request) {
@@ -363,25 +324,24 @@ func main() {
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
-	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong )
+	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
-		username=HandleLogin(w, r)
-		if username == "err"{
+		username = HandleLogin(w, r)
+		if username == "err" {
 			fmt.Println("err in login func")
 		}
-		
+
 	})
 	http.HandleFunc("/handle-register", func(w http.ResponseWriter, r *http.Request) {
-		username=HandleRegister(w, r)
-		if username == "err"{
+		username = HandleRegister(w, r)
+		if username == "err" {
 			fmt.Println("err in login func")
 		}
-		
+
 	})
 
-	
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
@@ -389,22 +349,22 @@ func main() {
 		GoGuessTheSong(w, r)
 	})
 	http.HandleFunc("/Scattergories/webs", func(w http.ResponseWriter, r *http.Request) {
-		Groupi.WsScattergories(w, r,time,nbRound, username)
+		Groupi.WsScattergories(w, r, time, nbRound, username)
 	})
 
 	http.HandleFunc("/RuleForScattergories", func(w http.ResponseWriter, r *http.Request) {
 		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 		defer db.Close()
-		nameRooms,nbPlayer,ti,nbRo:=ruleScattergories(r)
-		time=ti
-		nbRound=nbRo
+		nameRooms, nbPlayer, ti, nbRo := ruleScattergories(r)
+		time = ti
+		nbRound = nbRo
 		newGame := Groupi.Game{
 			Name: nameRooms,
 		}
 		gameID, err := Groupi.CreateGameAndGetID(db, newGame)
 		if err != nil {
 			fmt.Println("Erreur lors de la création du jeu:", err)
-		
+
 			return
 		}
 		userID, err := Groupi.GetUserIDByUsername(db, username)
@@ -421,12 +381,11 @@ func main() {
 		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
 		id := strconv.Itoa(roomID)
 		http.Redirect(w, r, "/Scattergories?room="+id, http.StatusSeeOther)
-		
+
 	})
 
-
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
-		GoScattergories(w, r , username)
+		GoScattergories(w, r, username)
 	})
 
 	fs := http.FileServer(http.Dir("static"))
