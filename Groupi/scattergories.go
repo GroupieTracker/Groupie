@@ -337,6 +337,7 @@ if !isStarted{
 				return
 			}
 			if donnee.Event =="start"{
+				fmt.Printf("start")
 				isStarted=!isStarted
 			}
 	}
