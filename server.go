@@ -198,7 +198,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 		return "err"
 	}
 
-
 	username, err := Groupi.GetUsernameByEmailOrUsername(db, usernameOrEmail)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -326,6 +325,7 @@ func main() {
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
+	http.HandleFunc("/logout", Logout)
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
 		username = HandleLogin(w, r)
