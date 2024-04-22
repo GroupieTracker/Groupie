@@ -205,10 +205,9 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 	}
 	expiration := time.Now().Add(24 * time.Hour)
 	cookieName := "auth_token"
-	cookieValue := usernameOrEmail
 	cookie := http.Cookie{
 		Name:     cookieName,
-		Value:    cookieValue,
+		Value:    username,
 		Expires:  expiration,
 		HttpOnly: true,
 	}
