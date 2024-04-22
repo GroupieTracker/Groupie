@@ -7,66 +7,57 @@
   </head>
   <body>
     <section class="waitingRoom">
-      <span>Nb de player </span><span class="nbPlayer"></span><span> sur </span><span class="maxPlayer"></span><span> max</span>
-      <div class="wait">
-      </div>
+      <span>Nb de player </span><span class="nbPlayer"></span><span> sur </span
+      ><span class="maxPlayer"></span><span> max</span>
+      <div class="wait"></div>
     </section>
     <section class="game">
       <div id="timer">Timer</div>
       <div id="lettre">Lettre</div>
       <div class="scor"></div>
-      <table >
-      <thead>
-        <tr>
-          <th>Artiste</th>
-          <th>Album</th>
-          <th>Groupe de musique</th>
-          <th>Instrument de musique</th>
-          <th>Featuring</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><input type="text" name="artiste" /></td>
-          <td><input type="text" name="album" /></td>
-          <td><input type="text" name="group" /></td>
-          <td><input type="text" name="instru" /></td>
-          <td><input type="text" name="feat" /></td>
-          <td>
-            <input type="button" value="Fini" onclick="end()" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+      <table>
+        <thead>
+          <tr>
+            <th>Artiste</th>
+            <th>Album</th>
+            <th>Groupe de musique</th>
+            <th>Instrument de musique</th>
+            <th>Featuring</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="text" name="artiste" /></td>
+            <td><input type="text" name="album" /></td>
+            <td><input type="text" name="group" /></td>
+            <td><input type="text" name="instru" /></td>
+            <td><input type="text" name="feat" /></td>
+            <td>
+              <input type="button" value="Fini" onclick="end()" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
     <script>
       var id;
       var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
-      const waitingRoom = document.querySelector(".waitingRoom")
-      const game = document.querySelector(".game")
-      game.style.display="none"
+      const waitingRoom = document.querySelector(".waitingRoom");
+      const game = document.querySelector(".game");
+      game.style.display = "none";
       const scor = document.querySelector(".scor");
       var ws = new WebSocket(
         "ws://10.70.6.24:8080/Scattergories/webs?room=" + roomID
       );
-      function start(){
-        console.log("gogogogoogog");
-        const dataToSend = {
-          Event: "start",
-          Data: [],
-        };
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(dataToSend));
-          } else {
-            console.error("WebSocket is not open.");
-        }
-      }
       ws.onmessage = function (event) {
         var data = JSON.parse(event.data);
         console.log(data);
         if (data.event == "fetchData") {
           collectAndSendValues();
+        } else if (data.event == "start") {
+          game.style.display = "block";
+          waitingRoom.style.display = "none";
         } else if (data.event == "timer") {
           var timer = document.getElementById("timer");
           timer.textContent = data.time;
@@ -84,7 +75,6 @@
             scor.removeChild(scor.firstChild);
           }
           var scores = data.scores;
-          console.log(scores);
           scores.forEach((user) => {
             const pseudo = document.createElement("div");
             pseudo.textContent = user[0];
@@ -93,45 +83,47 @@
             scor.appendChild(pseudo);
             scor.appendChild(scored);
           });
-        }else if (data.event=="waiting"){
-          const wait = document.querySelector(".wait")
-          document.querySelector(".nbPlayer").textContent=data.data[0]
-          document.querySelector(".maxPlayer").textContent=data.data[1]
-          if (id==data.data[2]){
+        } else if (data.event == "waiting") {
+          const wait = document.querySelector(".wait");
+          document.querySelector(".nbPlayer").textContent = data.data[0];
+          document.querySelector(".maxPlayer").textContent = data.data[1];
+          if (id == data.data[2]) {
             while (wait.firstChild) {
-            wait.removeChild(wait.firstChild);
-          }
-          const start = document.createElement("button");
-          start.textContent="lancer la partie"
-          start.addEventListener("click",()=>{
-            game.style.display="block"
-            waitingRoom.style.display="none"
-            start()
-          })
-          wait.appendChild(start)
+              wait.removeChild(wait.firstChild);
+            }
+            const start = document.createElement("button");
+            start.textContent = "lancer la partie";
+            start.addEventListener("click", () => {
+              const dataToSend = {
+                Event: "start",
+                Data: [],
+              };
+              if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(dataToSend));
+              } else {
+                console.error("WebSocket is not open.");
+              }
+            });
+            wait.appendChild(start);
           }
         }
       };
-
       function collectAndSendValues() {
         const dataToSend = {
           Event: "catchBackData",
           Data: [],
         };
-
         dataToSend.Data.push(String(id));
         var inputs = document.querySelectorAll('input[type="text"]');
         inputs.forEach(function (input) {
           dataToSend.Data.push(input.value);
         });
         if (ws.readyState === WebSocket.OPEN) {
-      
           ws.send(JSON.stringify(dataToSend));
         } else {
           console.error("WebSocket is not open.");
         }
       }
-     
 
       function end() {
         var inputs = document.querySelectorAll('input[type="text"]');

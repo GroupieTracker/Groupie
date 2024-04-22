@@ -176,3 +176,29 @@ func sendScores(room *Room, scores [][]string) {
 func stopTimer(stop chan<- struct{}) {
 	stop <- struct{}{}
 }
+
+
+func sendStartSignal(room *Room) {
+	tabscores := struct {
+		Event  string     `json:"event"`
+		Nothing string `json:"nothing"`
+	}{
+		Event:  "start",
+		Nothing: "r",
+	}
+	data, err := json.Marshal(tabscores)
+	if err != nil {
+		fmt.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			log.Println("Error writing message:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+}

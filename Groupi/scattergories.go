@@ -122,7 +122,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 
 	// game
 	if !isStarted {
-
 		for {
 			nbPlayer := len(usersIDs)
 			maxPlayer, err := GetMaxPlayersForRoom(db, roomIDInt)
@@ -149,13 +148,18 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 			if donnee.Event == "start" {
 				fmt.Printf("start")
 				isStarted = !isStarted
+				sendStartSignal(room)
+				break 
 			}
 		}
-	} else {
+	} 
+	if isStarted {
+		usersIDs,_=GetUsersInRoom(db, roomID)
 		for i := 0; i < round; i++ {
 			//Score
 			fmt.Println("usersIDs : ", usersIDs)
 			userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
+
 			if err != nil {
 				fmt.Println("Erreur lors de la get scores:", err)
 				return
@@ -200,6 +204,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 				} else if donnee.Event == "catchBackData" {
 					answer = donnee.Data
 					tabAnswer = append(tabAnswer, answer)
+					fmt.Println(tabAnswer)
 					if userID == iDCreatorOfRoom {
 						if len(tabAnswer) == len(usersIDs) {
 							addScore(tabAnswer, lettre, roomIDInt, userID, db)
