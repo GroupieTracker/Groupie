@@ -324,6 +324,7 @@ func main() {
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
+	http.HandleFunc("/logout", Logout)
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
 		username = HandleLogin(w, r)
