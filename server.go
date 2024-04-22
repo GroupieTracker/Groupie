@@ -198,7 +198,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 		return "err"
 	}
 
-
 	username, err := Groupi.GetUsernameByEmailOrUsername(db, usernameOrEmail)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -396,6 +395,9 @@ func main() {
 
 	fsPicture := http.FileServer(http.Dir("static/assets/pictures"))
 	http.Handle("/static/assets/pictures/", http.StripPrefix("/static/assets/pictures/", fsPicture))
+
+	fsTracks := http.FileServer(http.Dir("static/assets/tracks"))
+	http.Handle("/static/assets/tracks/", http.StripPrefix("/static/assets/tracks/", fsTracks))
 
 	fmt.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
