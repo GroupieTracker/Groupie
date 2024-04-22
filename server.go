@@ -121,7 +121,6 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 			}
 
 			http.Redirect(w, r, "/lobby", http.StatusSeeOther)
-			return "err"
 		}
 	}
 	registerError(w, userError)
@@ -337,7 +336,7 @@ func main() {
 	http.HandleFunc("/handle-register", func(w http.ResponseWriter, r *http.Request) {
 		username = HandleRegister(w, r)
 		if username == "err" {
-			fmt.Println("err in login func")
+			fmt.Println("err in register func")
 		}
 
 	})
