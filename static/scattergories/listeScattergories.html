@@ -1,24 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-  </head>
-  <body>
-
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Nouveau CSS pour les rooms */
+        .room {
+            width: 150px;
+            height: 150px;
+            background-color: var(--tertiary-color);
+            color: var(--text-color);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .room:hover {
+            background-color: var(--primary-color);
+        }
+        
+        .room-name {
+            font-family: "Jersey 15", sans-serif;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
     <div class="liste">
-      {{range .}}
-      <a href="Scattergories?room={{index . 1}}">
-
-          <li>{{index . 0}}</li>
+        {{range .}}
+        <a href="Scattergories?room={{index . 1}}" class="room">
+            <div class="room-name">{{index . 0}}</div>
         </a>
-          {{end}}
+        {{end}}
     </div>
-    <div class="">
-        <a href="LobScattergories">
-            <div class="">Créées ta room</div>
-        </a>
-    </div>
-  </body>
+    <a href="LobScattergories">
+        <button id="create-room">Créer ta room</button>
+    </a>
+</body>
 </html>
