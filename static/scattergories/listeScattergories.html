@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+
+    <div class="liste">
+      {{range .}}
+      <a href="Scattergories?room={{index . 1}}">
+
+          <li>{{index . 0}}</li>
+        </a>
+          {{end}}
+    </div>
+    <div class="">
+        <a href="LobScattergories">
+            <div class="">Créées ta room</div>
+        </a>
+    </div>
+  </body>
+</html>

@@ -38,7 +38,7 @@ func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 func GoScattergories(w http.ResponseWriter, r *http.Request, username string) {
-	tmpl, err := template.ParseFiles("./static/scattergories.html")
+	tmpl, err := template.ParseFiles("./static/scattergories/scattergories.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -63,12 +63,24 @@ func ruleScattergories(r *http.Request) (string, int, int, int) {
 }
 
 func GoLobScattergories(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./static/lobbyScattergories.html")
+	tmpl, err := template.ParseFiles("./static/scattergories/lobbyScattergories.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	tmpl.Execute(w, nil)
+}
+
+func GoListScattergories(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/scattergories/listeScattergories.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+		defer db.Close()
+	tab , _ :=Groupi.GetRoomsByGameCategory(db , "scattergories")
+	tmpl.Execute(w, tab)
 }
 
 func main() {
@@ -82,6 +94,7 @@ func main() {
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
+	http.HandleFunc("/ListLobOfScattergories", GoListScattergories)
 	http.HandleFunc("/logout", Logout)
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
