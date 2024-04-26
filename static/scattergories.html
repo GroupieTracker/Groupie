@@ -11,6 +11,7 @@
       ><span class="maxPlayer"></span><span> max</span>
       <div class="wait"></div>
     </section>
+    <h1 class="idHa"></h1>
     <section class="game">
       <div id="timer">Timer</div>
       <div id="lettre">Lettre</div>
@@ -70,6 +71,7 @@
           });
         } else if (data.event == "id") {
           id = data.id;
+          document.querySelector(".idHa").textContent = id
         } else if (data.event == "scoresData") {
           while (scor.firstChild) {
             scor.removeChild(scor.firstChild);
