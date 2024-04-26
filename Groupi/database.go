@@ -233,3 +233,23 @@ func GetUsernameByEmailOrUsername(db *sql.DB, identifier string) (string, error)
 
 	return username, nil
 }
+
+func ClearDatabase(db *sql.DB) error {
+    _, err := db.Exec("DELETE FROM ROOM_USERS")
+    if err != nil {
+        return err
+    }
+    _, err = db.Exec("DELETE FROM ROOMS")
+    if err != nil {
+        return err
+    }
+    _, err = db.Exec("DELETE FROM GAMES")
+    if err != nil {
+        return err
+    }
+    // _, err = db.Exec("DELETE FROM USER")
+    // if err != nil {
+    //     return err
+    // }
+    return nil
+}

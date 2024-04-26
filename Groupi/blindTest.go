@@ -14,11 +14,10 @@ import (
 
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2/clientcredentials"
-
 	websocket "github.com/gorilla/websocket"
 )
 
-var spotifyClient  *spotify.Client
+var spotifyClient *spotify.Client
 var spotifyTracks []string
 var Track string = "https://open.spotify.com/embed/track/2uqYupMHANxnwgeiXTZXzd?&autoplay=1"
 var Answer string
@@ -28,25 +27,6 @@ var firstUser bool = true
 var ActMusic string = "https://open.spotify.com/embed/track/2uqYupMHANxnwgeiXTZXzd?&autoplay=1"
 var musicLock sync.Mutex
 var timerDataLock sync.Mutex
-
-type Room struct {
-	ID          string
-	Connections map[*websocket.Conn]bool
-	UsersCount  int
-	TimerActive bool
-}
-
-var (
-	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-	rooms = make(map[string]*Room) // Carte pour stocker toutes les rooms
-	mutex = sync.Mutex{}           // Mutex pour la synchronisation lors de la gestion des connexions
-)
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -135,11 +115,11 @@ func extractTrackID(spotifyLink string) string {
 	return trackID
 }
 
-func bouclTimer(room *Room) {
+func bouclTimerBT(room *Room) {
 	if len(room.Connections) == 1 {
 		timeForRound := 10
 		for {
-			sendTimer(room, timeForRound)
+			sendTimerBT(room, timeForRound)
 			timeForRound = timeForRound - 1
 			time.Sleep(1 * time.Second)
 			if timeForRound < 0 {
@@ -153,7 +133,7 @@ func bouclTimer(room *Room) {
 	}
 }
 
-func sendTimer(room *Room, time int) {
+func sendTimerBT(room *Room, time int) {
 	var title string
 	if Track != "" {
 		title = GetTitle()
@@ -201,6 +181,7 @@ func loadSpotifyTracks(filename string) {
 }
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("de")
 	roomID := r.URL.Query().Get("room")
 	if roomID == "" {
 		roomID = "blindTest"
@@ -223,7 +204,7 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	if firstUser == true {
-		go bouclTimer(room)
+		go bouclTimerBT(room)
 	}
 
 	mutex.Lock()
