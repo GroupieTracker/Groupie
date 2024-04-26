@@ -72,16 +72,14 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, userID int, db
 	}
 }
 
-func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int, username string) {
+func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int , userID int) {
 	isStarted := false
-	fmt.Println("username : ", username)
 	var err error
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
 		log.Fatal("Error opening database:", err)
 	}
 	defer db.Close()
-
 	roomID := r.URL.Query().Get("room")
 	room, ok := rooms[roomID]
 	if !ok {
@@ -99,38 +97,34 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 	defer conn.Close()
 	mutex.Lock()
 	room.Connections[conn] = true
-	mutex.Unlock()
+	mutex.Unlock()	
+
 	iDCreatorOfRoom, err := GetRoomCreatorID(db, roomID)
 	if err != nil {
 		log.Println("Error upgrading to WebSocket: l 151", err)
 		return
-	}
-	userID, err := GetUserIDByUsername(db, username)
-	sendId(room, conn, userID)
-	if err != nil {
-		log.Println("Error upgrading to WebSocket: l156", err)
-		return
-	}
+		}	
+		userNameOfCreator  , _:= GetUsernameByID(db ,iDCreatorOfRoom )
 	roomIDInt, _ := strconv.Atoi(roomID)
-	AddRoomUser(db, roomIDInt, userID)
 	usersIDs, _ := GetUsersInRoom(db, roomID)
 
 	var answer []string
 	var lettre string
 	var tabAnswer [][]string
 	var tabNul [][]string
+	maxPlayer, err := GetMaxPlayersForRoom(db, roomIDInt)
+	if err != nil {
+		fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
+		return
+	}
 
 	// game
 	if !isStarted {
 		for {
 			nbPlayer := len(usersIDs)
-			maxPlayer, err := GetMaxPlayersForRoom(db, roomIDInt)
-			if err != nil {
-				fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
-				return
-			}
 			fmt.Println("usersIDs : ", usersIDs, nbPlayer)
-			sendWaitingRoom(room, nbPlayer, maxPlayer, iDCreatorOfRoom)
+			fmt.Println("userID : " , userID , ",creatorID : ",userNameOfCreator)
+			sendWaitingRoom(room, nbPlayer, maxPlayer, userNameOfCreator)
 			_, p, err := conn.ReadMessage()
 			if err != nil {
 				log.Println("Error reading message:", err)
@@ -145,7 +139,10 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 				fmt.Println("Erreur lors de la conversion des données:", err)
 				return
 			}
-			if donnee.Event == "start" {
+			if donnee.Event=="newPlayer" {
+				fmt.Println("newPLayer : " ,donnee.Data[0] )
+				
+			}else if donnee.Event == "start" {
 				fmt.Printf("start")
 				isStarted = !isStarted
 				sendStartSignal(room)

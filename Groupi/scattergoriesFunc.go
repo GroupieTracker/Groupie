@@ -45,38 +45,15 @@ func bouclTimer(room *Room, timeForRound int, stop <-chan struct{}) {
 		}
 	}
 }
-func sendId(room *Room, conn *websocket.Conn, userID int) {
-	tabId := struct {
-		Event string `json:"event"`
-		Id    int    `json:"id"`
-	}{
-		Event: "id",
-		Id:    userID,
-	}
-	data, err := json.Marshal(tabId)
-	if err != nil {
-		fmt.Println("Erreur de marshalling JSON:", err)
-		return
-	}
-	mutex.Lock()
-	defer mutex.Unlock()
-	if room.Connections[conn] {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(data))
-		if err != nil {
-			log.Println("Error writing message to connection:", err)
-		}
-	}
 
-}
-
-func sendWaitingRoom(room *Room, nbPlayer, maxPlayer, idChef int) {
-	var tab []int
+func sendWaitingRoom(room *Room, nbPlayer int , maxPlayer int, username string) {
+	var tab []any
 	tab = append(tab, nbPlayer)
 	tab = append(tab, maxPlayer)
-	tab = append(tab, idChef)
+	tab = append(tab, username)
 	tabwaiting := struct {
 		Event string `json:"event"`
-		Data  []int  `json:"data"`
+		Data  []any  `json:"data"`
 	}{
 		Event: "waiting",
 		Data:  tab,

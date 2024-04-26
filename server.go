@@ -120,7 +120,16 @@ func main() {
 		GoGuessTheSong(w, r)
 	})
 	http.HandleFunc("/Scattergories/webs", func(w http.ResponseWriter, r *http.Request) {
-		Groupi.WsScattergories(w, r, time, nbRound, username)
+		db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
+		defer db.Close()
+		roomID := r.URL.Query().Get("room")
+		roomIDInt, _ := strconv.Atoi(roomID)
+		userID,_:=Groupi.GetUserIDByUsername(db,username)
+		Groupi.AddRoomUser(db, roomIDInt, userID)
+		fmt.Println(roomIDInt , userID)
+		usersIDs, _ := Groupi.GetUsersInRoom(db, roomID)
+		fmt.Println(usersIDs)
+		Groupi.WsScattergories(w, r, time, nbRound , userID)
 	})
 
 	http.HandleFunc("/RuleForScattergories", func(w http.ResponseWriter, r *http.Request) {
