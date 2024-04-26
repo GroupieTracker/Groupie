@@ -150,17 +150,17 @@ func sendTimerBT(room *Room, time int) {
 		Time:  time,
 		Title: title,
 	}
-	data, err := json.Marshal(tabTime)
-	if err != nil {
-		fmt.Println("Erreur de marshalling JSON:", err)
-		return
-	}
+	// data, err := json.Marshal(tabTime)
+	// if err != nil {
+	// 	fmt.Println("Erreur de marshalling JSON:", err)
+	// 	return
+	// }
 
 	timerDataLock.Lock()
 	defer timerDataLock.Unlock()
 
 	for conn := range room.Connections {
-		err := conn.WriteMessage(websocket.TextMessage, data)
+		err := conn.WriteJSON(tabTime)
 		if err != nil {
 			log.Println("Error writing message:", err)
 			conn.Close()
@@ -201,9 +201,9 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	defer conn.Close()
+	// defer conn.Close()
 
-	if firstUser == true {
+	if firstUser {
 		go bouclTimerBT(room)
 	}
 

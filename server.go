@@ -344,6 +344,7 @@ func main() {
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
+
 	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
 		GoGuessTheSong(w, r)
 	})
