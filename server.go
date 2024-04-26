@@ -121,7 +121,6 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 			}
 
 			http.Redirect(w, r, "/lobby", http.StatusSeeOther)
-			return "err"
 		}
 	}
 	registerError(w, userError)
@@ -324,6 +323,7 @@ func main() {
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
+	http.HandleFunc("/logout", Logout)
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
 		username = HandleLogin(w, r)
@@ -335,7 +335,7 @@ func main() {
 	http.HandleFunc("/handle-register", func(w http.ResponseWriter, r *http.Request) {
 		username = HandleRegister(w, r)
 		if username == "err" {
-			fmt.Println("err in login func")
+			fmt.Println("err in register func")
 		}
 
 	})
@@ -343,6 +343,7 @@ func main() {
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
+
 	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
 		GoGuessTheSong(w, r)
 	})
