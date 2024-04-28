@@ -39,7 +39,7 @@ func endStart(room *Room) {
 
 }
 
-func addScore(tabAnswer [][]string, lettre string, roomIDInt int, userID int, db *sql.DB) {
+func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
 	fmt.Println("tab", tabAnswer, "|")
 	// [[82=iduser O o o fez fezf]]
 
@@ -63,8 +63,8 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, userID int, db
 
 			}
 		}
-
-		err := UpdateRoomUserScore(db, roomIDInt, userID, score)
+		idactu,_:=GetUserIDByUsername(db ,tabAnswer[i][0])
+		err := UpdateRoomUserScore(db, roomIDInt,idactu , score)
 		if err != nil {
 			fmt.Println("Erreur lors de la conversion des données:", err)
 			return
@@ -121,6 +121,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 	// game
 	if !isStarted {
 		for {
+			usersIDs, _ = GetUsersInRoom(db, roomID)
 			nbPlayer := len(usersIDs)
 			fmt.Println("usersIDs : ", usersIDs, nbPlayer)
 			fmt.Println("userID : " , userID , ",creatorID : ",userNameOfCreator)
@@ -140,8 +141,17 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 				return
 			}
 			if donnee.Event=="newPlayer" {
+				db, err = sql.Open("sqlite3", "./Groupi/BDD.db")
+				if err != nil {
+				log.Fatal("Error opening database:", err)
+					}
+				defer db.Close()
 				fmt.Println("newPLayer : " ,donnee.Data[0] )
-				
+				id , _:= GetUserIDByUsername(db, donnee.Data[0])
+				err := AddRoomUser(db , roomIDInt , id)
+				if err != nil {
+					log.Println("Error reading message:", err)
+				}
 			}else if donnee.Event == "start" {
 				fmt.Printf("start")
 				isStarted = !isStarted
@@ -151,12 +161,9 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		}
 	} 
 	if isStarted {
-		usersIDs,_=GetUsersInRoom(db, roomID)
 		for i := 0; i < round; i++ {
-			//Score
-			fmt.Println("usersIDs : ", usersIDs)
+			usersIDs,_=GetUsersInRoom(db, roomID)
 			userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
-
 			if err != nil {
 				fmt.Println("Erreur lors de la get scores:", err)
 				return
@@ -165,11 +172,10 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 				return userScores[i][1] < userScores[j][1]
 			})
 			sendScores(room, userScores)
+
+
 			tabAnswer = tabNul
-			if err != nil {
-				fmt.Println("Erreur lors de la conversion des données:", err)
-				return
-			}
+
 			//init round time+lettre
 			stop := make(chan struct{})
 			if userID == iDCreatorOfRoom {
@@ -195,8 +201,8 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 				fmt.Println("donne.data : ", donnee.Data)
 
 				if donnee.Event == "end" {
-					endStart(room)
 					stopTimer(stop)
+					endStart(room)
 
 				} else if donnee.Event == "catchBackData" {
 					answer = donnee.Data
@@ -204,7 +210,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 					fmt.Println(tabAnswer)
 					if userID == iDCreatorOfRoom {
 						if len(tabAnswer) == len(usersIDs) {
-							addScore(tabAnswer, lettre, roomIDInt, userID, db)
+							addScore(tabAnswer, lettre, roomIDInt, db)
 							break
 						}
 					}
