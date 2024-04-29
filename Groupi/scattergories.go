@@ -41,37 +41,37 @@ func endStart(room *Room) {
 }
 
 func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
-	fmt.Println("tab", tabAnswer, "|" , tabAnswer[0][0])
-nbCategories := 5
-
+	fmt.Println("tab", tabAnswer)
+	nbCategories := 5
 	unique := true
+	lettreMin := strings.ToLower(lettre) 
+	lettreMaj := strings.ToUpper(lettre) 
 	for i := 0; i < len(tabAnswer); i++ {
 		score := 0
-		for y := 1; y <=nbCategories ; y++ {
-		
-	
-			if string(tabAnswer[i][y]) == "" {
+		for y := 1; y <= nbCategories; y++ {
+			unique = true
+			if tabAnswer[i][y] == "" {
 				score += 0
 			} else {
-				if strings.HasPrefix(lettre, tabAnswer[i][y]) {
+				mot := tabAnswer[i][y]
+				if strings.HasPrefix(strings.ToLower(mot), lettreMin) || strings.HasPrefix(strings.ToUpper(mot), lettreMaj) {
 					for o := 0; o < len(tabAnswer); o++ {
-						if string(tabAnswer[i][y]) == string(tabAnswer[o][y]) && o != i {
+						if strings.ToLower(tabAnswer[i][y]) == strings.ToLower(tabAnswer[o][y]) && o != i {
 							unique = false
 						}
 					}
 					if unique {
 						score += 2
-						} else {
-							score += 1
-						}
-						
-					}else{
-						score+=0
+					} else {
+						score += 1
 					}
+				} else {
+					score += 0
 				}
+			}
 		}
-		idactu,_:=GetUserIDByUsername(db ,tabAnswer[i][0])
-		err := UpdateRoomUserScore(db, roomIDInt,idactu , score)
+		idactu, _ := GetUserIDByUsername(db, tabAnswer[i][0])
+		err := UpdateRoomUserScore(db, roomIDInt, idactu, score)
 		if err != nil {
 			fmt.Println("Erreur lors de la conversion des données:", err)
 			return
@@ -105,7 +105,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()	
-
 	iDCreatorOfRoom, err := GetRoomCreatorID(db, roomID)
 	if err != nil {
 		log.Println("Error upgrading to WebSocket: l 151", err)
@@ -124,6 +123,8 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
 		return
 	}
+
+	if userID == iDCreatorOfRoom {
 
 	// game
 	if !isStarted {
@@ -215,16 +216,15 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 
 					answer = donnee.Data
 					tabAnswer = append(tabAnswer, answer)
-					fmt.Println(lettre)
-					// fmt.Println(tabAnswer)
-					// if len(tabAnswer) == len(usersIDs) {
-					// 	if userID == iDCreatorOfRoom {
-					// 		addScore(tabAnswer, lettre, roomIDInt, db)
-					// 		break
-					// 	}
-					// }
+					fmt.Println(tabAnswer)
+					if len(tabAnswer) == len(usersIDs) {
+						if userID == iDCreatorOfRoom {
+							addScore(tabAnswer, lettre, roomIDInt, db)
+							break
+						}
+					}
 				}
 			}
 		}
-	}
+	}}
 }

@@ -74,6 +74,7 @@ func sendWaitingRoom(room *Room, nbPlayer int , maxPlayer int, username string) 
 		}
 	}
 }
+
 func sendRandomLetter(room *Room) string {
 	letter := getRandomLetter()
 	tabLettre := struct {
@@ -100,6 +101,7 @@ func sendRandomLetter(room *Room) string {
 	}
 	return letter
 }
+
 func sendTimer(room *Room, time int) {
 	tabId := struct {
 		Event string `json:"event"`
