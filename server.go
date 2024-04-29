@@ -298,7 +298,6 @@ func ruleScattergories(r *http.Request) (string, int, int, int) {
 		time, _ := strconv.Atoi(r.FormValue("time"))
 		round, _ := strconv.Atoi(r.FormValue("nbRound"))
 		return name, nbPlayer, time, round
-
 	}
 	return "", -1, -1, -1
 }
@@ -320,7 +319,6 @@ func main() {
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
-	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
 	http.HandleFunc("/logout", Logout)
@@ -342,6 +340,10 @@ func main() {
 
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
+	})
+
+	http.HandleFunc("/BlindTest/webs", func(w http.ResponseWriter, r *http.Request) {
+		Groupi.WsBlindTest(w, r, username)
 	})
 
 	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {

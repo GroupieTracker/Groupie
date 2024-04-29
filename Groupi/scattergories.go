@@ -154,6 +154,9 @@ func sendTimer(room *Room, time int) {
 	}
 }
 
+
+
+
 func sendScores(room *Room, scores [][]string) {
 	tabscores := struct {
 		Event  string     `json:"event"`
