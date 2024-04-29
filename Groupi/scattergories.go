@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
@@ -40,28 +41,34 @@ func endStart(room *Room) {
 }
 
 func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
-	fmt.Println("tab", tabAnswer, "|")
-	// [[82=iduser O o o fez fezf]]
+	fmt.Println("tab", tabAnswer, "|" , tabAnswer[0][0])
+nbCategories := 5
 
 	unique := true
 	for i := 0; i < len(tabAnswer); i++ {
 		score := 0
-		for y := 1; y <= 5; y++ {
+		for y := 1; y <=nbCategories ; y++ {
+		
+	
 			if string(tabAnswer[i][y]) == "" {
 				score += 0
 			} else {
-				for o := 0; o < len(tabAnswer); o++ {
-					if string(tabAnswer[i][y]) == string(tabAnswer[o][y]) && o != i {
-						unique = false
+				if strings.HasPrefix(lettre, tabAnswer[i][y]) {
+					for o := 0; o < len(tabAnswer); o++ {
+						if string(tabAnswer[i][y]) == string(tabAnswer[o][y]) && o != i {
+							unique = false
+						}
+					}
+					if unique {
+						score += 2
+						} else {
+							score += 1
+						}
+						
+					}else{
+						score+=0
 					}
 				}
-				if unique {
-					score += 2
-				} else {
-					score += 1
-				}
-
-			}
 		}
 		idactu,_:=GetUserIDByUsername(db ,tabAnswer[i][0])
 		err := UpdateRoomUserScore(db, roomIDInt,idactu , score)
@@ -153,7 +160,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 					log.Println("Error reading message:", err)
 				}
 			}else if donnee.Event == "start" {
-				fmt.Printf("start")
 				isStarted = !isStarted
 				sendStartSignal(room)
 				break 
@@ -161,6 +167,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		}
 	} 
 	if isStarted {
+		fmt.Println("----------------------------START----------------------------")
 		for i := 0; i < round; i++ {
 			usersIDs,_=GetUsersInRoom(db, roomID)
 			userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
@@ -205,15 +212,17 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 					endStart(room)
 
 				} else if donnee.Event == "catchBackData" {
+
 					answer = donnee.Data
 					tabAnswer = append(tabAnswer, answer)
-					fmt.Println(tabAnswer)
-					if userID == iDCreatorOfRoom {
-						if len(tabAnswer) == len(usersIDs) {
-							addScore(tabAnswer, lettre, roomIDInt, db)
-							break
-						}
-					}
+					fmt.Println(lettre)
+					// fmt.Println(tabAnswer)
+					// if len(tabAnswer) == len(usersIDs) {
+					// 	if userID == iDCreatorOfRoom {
+					// 		addScore(tabAnswer, lettre, roomIDInt, db)
+					// 		break
+					// 	}
+					// }
 				}
 			}
 		}

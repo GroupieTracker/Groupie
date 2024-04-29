@@ -41,6 +41,7 @@
     </section>
     <script>
       var id;
+      var start =false
       var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
       var one = true
@@ -49,7 +50,7 @@
       game.style.display = "none";
       const scor = document.querySelector(".scor");
       var ws = new WebSocket(
-        "ws://10.70.6.24:8080/Scattergories/webs?room=" + roomID
+        "ws://localhost:8080/Scattergories/webs?room=" + roomID
       );
       const userName = getCookie("auth_token");
       ws.onmessage = function (event) {
@@ -62,6 +63,7 @@
         if (data.event == "fetchData") {
           collectAndSendValues();
         } else if (data.event == "start") {
+          start=true
           game.style.display = "block";
           waitingRoom.style.display = "none";
         } else if (data.event == "timer") {
@@ -88,28 +90,29 @@
             scor.appendChild(scored);
           });
         } else if (data.event == "waiting") {
-          const wait = document.querySelector(".wait");
-          document.querySelector(".nbPlayer").textContent = data.data[0];
-          document.querySelector(".maxPlayer").textContent = data.data[1];
-          console.log(userName + " : " + data.data[2]);
-          if (userName == data.data[2]) {
-            while (wait.firstChild) {
-              wait.removeChild(wait.firstChild);
-            }
-            const start = document.createElement("button");
-            start.textContent = "lancer la partie";
-            start.addEventListener("click", () => {
-              const dataToSend = {
-                Event: "start",
-                Data: [],
-              };
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(dataToSend));
-              } else {
-                console.error("WebSocket is not open.");
+          if (start===false){
+            const wait = document.querySelector(".wait");
+            document.querySelector(".nbPlayer").textContent = data.data[0];
+            document.querySelector(".maxPlayer").textContent = data.data[1];
+            if (userName == data.data[2]) {
+              while (wait.firstChild) {
+                wait.removeChild(wait.firstChild);
               }
-            });
-            wait.appendChild(start);
+              const start = document.createElement("button");
+              start.textContent = "lancer la partie";
+              start.addEventListener("click", () => {
+                const dataToSend = {
+                  Event: "start",
+                  Data: [],
+                };
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify(dataToSend));
+                } else {
+                  console.error("WebSocket is not open.");
+                }
+              });
+              wait.appendChild(start);
+            }
           }
         }
       };
@@ -149,6 +152,7 @@
         inputs.forEach(function (input) {
           dataToSend.Data.push(input.value);
         });
+        console.log("envoie" , dataToSend.Data);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(dataToSend));
         } else {
