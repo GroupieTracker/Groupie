@@ -175,6 +175,7 @@ func main() {
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
 		username = HandleLogin(w, r)
+
 		if username == "err" {
 			fmt.Println("err in login func")
 		}
@@ -220,8 +221,9 @@ func main() {
 			fmt.Println("Erreur lors de la récupération du cookie :", err)
 			return
 		}
-		username = cookie.Value
 		// Groupi.ClearDatabase(db)
+		username = cookie.Value
+
 		defer db.Close()
 		nameRooms, nbPlayer, ti, nbRo := ruleScattergories(r)
 		time = ti
@@ -254,7 +256,6 @@ func main() {
 
 	http.HandleFunc("/RuleForBlindtest", func(w http.ResponseWriter, r *http.Request) {
 		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
-		// Groupi.ClearDatabase(db)
 		defer db.Close()
 		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
 		time = ti
@@ -287,7 +288,6 @@ func main() {
 
 	http.HandleFunc("/RuleForGuessthesong", func(w http.ResponseWriter, r *http.Request) {
 		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
-		// Groupi.ClearDatabase(db)
 		defer db.Close()
 		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
 		time = ti
@@ -317,72 +317,6 @@ func main() {
 		http.Redirect(w, r, "/GuessTheSong?room="+id, http.StatusSeeOther)
 
 	})
-
-	// http.HandleFunc("/RuleForBlindtest", func(w http.ResponseWriter, r *http.Request) {
-	// 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
-	// 	// Groupi.ClearDatabase(db)
-	// 	defer db.Close()
-	// 	nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
-	// 	time = ti
-	// 	nbRound = nbRo
-	// 	newGame := Groupi.Game{
-	// 		Name: "blindtest",
-	// 	}
-	// 	gameID, err := Groupi.CreateGameAndGetID(db, newGame)
-	// 	if err != nil {
-	// 		fmt.Println("Erreur lors de la création du jeu:", err)
-
-	// 		return
-	// 	}
-	// 	userID, err := Groupi.GetUserIDByUsername(db, username)
-	// 	if err != nil {
-	// 		fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
-	// 		return
-	// 	}
-	// 	newRoom := Groupi.Roomms{
-	// 		CreatedBy:  userID,
-	// 		MaxPlayers: nbPlayer,
-	// 		Name:       nameRooms,
-	// 		GameID:     gameID,
-	// 	}
-	// 	roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
-	// 	id := strconv.Itoa(roomID)
-	// 	http.Redirect(w, r, "/BlindTest?room="+id, http.StatusSeeOther)
-
-	// })
-
-	// http.HandleFunc("/RuleForGuessthesong", func(w http.ResponseWriter, r *http.Request) {
-	// 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
-	// 	// Groupi.ClearDatabase(db)
-	// 	defer db.Close()
-	// 	nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
-	// 	time = ti
-	// 	nbRound = nbRo
-	// 	newGame := Groupi.Game{
-	// 		Name: "guessthesong",
-	// 	}
-	// 	gameID, err := Groupi.CreateGameAndGetID(db, newGame)
-	// 	if err != nil {
-	// 		fmt.Println("Erreur lors de la création du jeu:", err)
-
-	// 		return
-	// 	}
-	// 	userID, err := Groupi.GetUserIDByUsername(db, username)
-	// 	if err != nil {
-	// 		fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
-	// 		return
-	// 	}
-	// 	newRoom := Groupi.Roomms{
-	// 		CreatedBy:  userID,
-	// 		MaxPlayers: nbPlayer,
-	// 		Name:       nameRooms,
-	// 		GameID:     gameID,
-	// 	}
-	// 	roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
-	// 	id := strconv.Itoa(roomID)
-	// 	http.Redirect(w, r, "/GuessTheSong?room="+id, http.StatusSeeOther)
-
-	// })
 
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
 		GoScattergories(w, r, username)
