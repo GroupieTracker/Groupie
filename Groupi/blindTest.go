@@ -29,6 +29,7 @@ var ActMusic string = "https://open.spotify.com/embed/track/2uqYupMHANxnwgeiXTZX
 var musicLock sync.Mutex
 var timerDataLock sync.Mutex
 var userName string = "ça marche à moitié"
+var trackTitle string
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -66,6 +67,7 @@ func sendMusic(room *Room, musicURL string) {
 
 	mutex.Lock()
 	defer mutex.Unlock()
+	trackTitle = GetTitle()
 
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, jsonData)
@@ -79,8 +81,8 @@ func sendMusic(room *Room, musicURL string) {
 
 func initSpotifyClient() *spotify.Client {
 	config := &clientcredentials.Config{
-		ClientID:     "5406ffed7c33489b915321267e3ca75f",
-		ClientSecret: "bbaefa27380049a39c30e53c9bddc0c6",
+		ClientID:     "77ac44bd776c43f5b83101eb965ce2a0",
+		ClientSecret: "d3caf0734bc84e439e02454b6510453e",
 		TokenURL:     spotify.TokenURL,
 	}
 
@@ -137,9 +139,9 @@ func bouclTimerBT(room *Room) {
 func sendTimerBT(room *Room, time int) {
 	var title string
 	if Track != "" {
-		title = GetTitle()
+		title = trackTitle
 	} else {
-		title = "Austin"
+		title = "quoicoubebou des montagnes"
 	}
 	tabScore := struct {
 		Event string `json:"event"`
