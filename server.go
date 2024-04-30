@@ -22,7 +22,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func GoBlindTest(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./static/blindTest.html")
+	tmpl, err := template.ParseFiles("./static/blindtest/blindTest.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -31,7 +31,7 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 }
 
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./static/guessTheSong.html")
+	tmpl, err := template.ParseFiles("./static/guessthesong/guessTheSong.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -68,6 +68,7 @@ func ruleScattergories(r *http.Request) (string, int, int, int) {
 		time, _ := strconv.Atoi(r.FormValue("time"))
 		round, _ := strconv.Atoi(r.FormValue("nbRound"))
 		return name, nbPlayer, time, round
+
 	}
 	return "", -1, -1, -1
 }
@@ -148,8 +149,6 @@ func GoListScattergories(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	defer db.Close()
 	tab, _ := Groupi.GetRoomsByGameCategory(db, "scattergories")
-	defer db.Close()
-	tab, _ := Groupi.GetRoomsByGameCategory(db, "scattergories")
 	tmpl.Execute(w, tab)
 }
 
@@ -162,6 +161,7 @@ func main() {
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
+	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobBlindtest", GoLobBlindtest)
 	http.HandleFunc("/ListBlindtest", GoListBlindtest)
@@ -191,11 +191,6 @@ func main() {
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
-
-	http.HandleFunc("/BlindTest/webs", func(w http.ResponseWriter, r *http.Request) {
-		Groupi.WsBlindTest(w, r, username)
-	})
-
 	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
 		GoGuessTheSong(w, r)
 	})
@@ -323,71 +318,71 @@ func main() {
 
 	})
 
-	http.HandleFunc("/RuleForBlindtest", func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
-		// Groupi.ClearDatabase(db)
-		defer db.Close()
-		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
-		time = ti
-		nbRound = nbRo
-		newGame := Groupi.Game{
-			Name: "blindtest",
-		}
-		gameID, err := Groupi.CreateGameAndGetID(db, newGame)
-		if err != nil {
-			fmt.Println("Erreur lors de la création du jeu:", err)
+	// http.HandleFunc("/RuleForBlindtest", func(w http.ResponseWriter, r *http.Request) {
+	// 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+	// 	// Groupi.ClearDatabase(db)
+	// 	defer db.Close()
+	// 	nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
+	// 	time = ti
+	// 	nbRound = nbRo
+	// 	newGame := Groupi.Game{
+	// 		Name: "blindtest",
+	// 	}
+	// 	gameID, err := Groupi.CreateGameAndGetID(db, newGame)
+	// 	if err != nil {
+	// 		fmt.Println("Erreur lors de la création du jeu:", err)
 
-			return
-		}
-		userID, err := Groupi.GetUserIDByUsername(db, username)
-		if err != nil {
-			fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
-			return
-		}
-		newRoom := Groupi.Roomms{
-			CreatedBy:  userID,
-			MaxPlayers: nbPlayer,
-			Name:       nameRooms,
-			GameID:     gameID,
-		}
-		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
-		id := strconv.Itoa(roomID)
-		http.Redirect(w, r, "/BlindTest?room="+id, http.StatusSeeOther)
+	// 		return
+	// 	}
+	// 	userID, err := Groupi.GetUserIDByUsername(db, username)
+	// 	if err != nil {
+	// 		fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
+	// 		return
+	// 	}
+	// 	newRoom := Groupi.Roomms{
+	// 		CreatedBy:  userID,
+	// 		MaxPlayers: nbPlayer,
+	// 		Name:       nameRooms,
+	// 		GameID:     gameID,
+	// 	}
+	// 	roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
+	// 	id := strconv.Itoa(roomID)
+	// 	http.Redirect(w, r, "/BlindTest?room="+id, http.StatusSeeOther)
 
-	})
+	// })
 
-	http.HandleFunc("/RuleForGuessthesong", func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
-		// Groupi.ClearDatabase(db)
-		defer db.Close()
-		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
-		time = ti
-		nbRound = nbRo
-		newGame := Groupi.Game{
-			Name: "guessthesong",
-		}
-		gameID, err := Groupi.CreateGameAndGetID(db, newGame)
-		if err != nil {
-			fmt.Println("Erreur lors de la création du jeu:", err)
+	// http.HandleFunc("/RuleForGuessthesong", func(w http.ResponseWriter, r *http.Request) {
+	// 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+	// 	// Groupi.ClearDatabase(db)
+	// 	defer db.Close()
+	// 	nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
+	// 	time = ti
+	// 	nbRound = nbRo
+	// 	newGame := Groupi.Game{
+	// 		Name: "guessthesong",
+	// 	}
+	// 	gameID, err := Groupi.CreateGameAndGetID(db, newGame)
+	// 	if err != nil {
+	// 		fmt.Println("Erreur lors de la création du jeu:", err)
 
-			return
-		}
-		userID, err := Groupi.GetUserIDByUsername(db, username)
-		if err != nil {
-			fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
-			return
-		}
-		newRoom := Groupi.Roomms{
-			CreatedBy:  userID,
-			MaxPlayers: nbPlayer,
-			Name:       nameRooms,
-			GameID:     gameID,
-		}
-		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
-		id := strconv.Itoa(roomID)
-		http.Redirect(w, r, "/GuessTheSong?room="+id, http.StatusSeeOther)
+	// 		return
+	// 	}
+	// 	userID, err := Groupi.GetUserIDByUsername(db, username)
+	// 	if err != nil {
+	// 		fmt.Println("Erreur lors de la récupération de l'ID de l'utilisateur:", err)
+	// 		return
+	// 	}
+	// 	newRoom := Groupi.Roomms{
+	// 		CreatedBy:  userID,
+	// 		MaxPlayers: nbPlayer,
+	// 		Name:       nameRooms,
+	// 		GameID:     gameID,
+	// 	}
+	// 	roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
+	// 	id := strconv.Itoa(roomID)
+	// 	http.Redirect(w, r, "/GuessTheSong?room="+id, http.StatusSeeOther)
 
-	})
+	// })
 
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
 		GoScattergories(w, r, username)
