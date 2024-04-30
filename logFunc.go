@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -107,6 +108,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return "err"
 			}
+			fmt.Println(username)
 
 			expiration := time.Now().Add(24 * time.Hour)
 			cookieName := "auth_token"
@@ -114,7 +116,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 				Name:     cookieName,
 				Value:    username,
 				Expires:  expiration,
-				HttpOnly: true,
+				HttpOnly: false,
 			}
 			http.SetCookie(w, &cookie)
 
@@ -199,13 +201,14 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return "err"
 	}
+	fmt.Println(username)
 	expiration := time.Now().Add(24 * time.Hour)
 	cookieName := "auth_token"
 	cookie := http.Cookie{
 		Name:     cookieName,
 		Value:    username,
 		Expires:  expiration,
-		HttpOnly: true,
+		HttpOnly: false,
 	}
 	http.SetCookie(w, &cookie)
 

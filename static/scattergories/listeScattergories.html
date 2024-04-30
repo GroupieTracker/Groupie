@@ -6,19 +6,19 @@
     <title>Document</title>
   </head>
   <body>
-
-    <div class="liste">
-      {{range .}}
-      <a href="Scattergories?room={{index . 1}}">
-
-          <li>{{index . 0}}</li>
-        </a>
-          {{end}}
-    </div>
     <div class="">
         <a href="LobScattergories">
             <div class="">Créées ta room</div>
         </a>
+    </div>
+
+    <div class="liste">
+      {{range .}}
+      <a href="WaitingRoomForScattergories?room={{index . 1}}">
+
+          <li>{{index . 0}}</li>
+        </a>
+          {{end}}
     </div>
   </body>
 </html>

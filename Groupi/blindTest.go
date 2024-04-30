@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
+	websocket "github.com/gorilla/websocket"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2/clientcredentials"
-	websocket "github.com/gorilla/websocket"
 )
 
 var spotifyClient *spotify.Client

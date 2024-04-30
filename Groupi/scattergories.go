@@ -8,19 +8,19 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-
 func endStart(room *Room) {
 	tabCatchData := struct {
 		Event string `json:"event"`
-		r     int    `json:"r"`
+		R     int    `json:"r"`
 	}{
 		Event: "fetchData",
-		r:     -1,
+		R:     -1,
 	}
 	data, err := json.Marshal(tabCatchData)
 	if err != nil {
@@ -39,32 +39,38 @@ func endStart(room *Room) {
 
 }
 
-func addScore(tabAnswer [][]string, lettre string, roomIDInt int, userID int, db *sql.DB) {
-	fmt.Println("tab", tabAnswer, "|")
-	// [[82=iduser O o o fez fezf]]
-
+func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
+	fmt.Println("tab", tabAnswer)
+	nbCategories := 5
 	unique := true
+	lettreMin := strings.ToLower(lettre)
+	lettreMaj := strings.ToUpper(lettre)
 	for i := 0; i < len(tabAnswer); i++ {
 		score := 0
-		for y := 1; y <= 5; y++ {
-			if string(tabAnswer[i][y]) == "" {
+		for y := 1; y <= nbCategories; y++ {
+			unique = true
+			if tabAnswer[i][y] == "" {
 				score += 0
 			} else {
-				for o := 0; o < len(tabAnswer); o++ {
-					if string(tabAnswer[i][y]) == string(tabAnswer[o][y]) && o != i {
-						unique = false
+				mot := tabAnswer[i][y]
+				if strings.HasPrefix(strings.ToLower(mot), lettreMin) || strings.HasPrefix(strings.ToUpper(mot), lettreMaj) {
+					for o := 0; o < len(tabAnswer); o++ {
+						if strings.ToLower(tabAnswer[i][y]) == strings.ToLower(tabAnswer[o][y]) && o != i {
+							unique = false
+						}
 					}
-				}
-				if unique {
-					score += 2
+					if unique {
+						score += 2
+					} else {
+						score += 1
+					}
 				} else {
-					score += 1
+					score += 0
 				}
-
 			}
 		}
-
-		err := UpdateRoomUserScore(db, roomIDInt, userID, score)
+		idactu, _ := GetUserIDByUsername(db, tabAnswer[i][0])
+		err := UpdateRoomUserScore(db, roomIDInt, idactu, score)
 		if err != nil {
 			fmt.Println("Erreur lors de la conversion des données:", err)
 			return
@@ -72,16 +78,13 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, userID int, db
 	}
 }
 
-func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int, username string) {
-	isStarted := false
-	fmt.Println("username : ", username)
+func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int) {
 	var err error
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
 		log.Fatal("Error opening database:", err)
 	}
 	defer db.Close()
-
 	roomID := r.URL.Query().Get("room")
 	room, ok := rooms[roomID]
 	if !ok {
@@ -96,6 +99,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		log.Println("Error upgrading to WebSocket: l 141", err)
 		return
 	}
+	fmt.Println("----------------------------GAME----------------------------")
 	defer conn.Close()
 	mutex.Lock()
 	room.Connections[conn] = true
@@ -105,61 +109,28 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		log.Println("Error upgrading to WebSocket: l 151", err)
 		return
 	}
-	userID, err := GetUserIDByUsername(db, username)
-	sendId(room, conn, userID)
-	if err != nil {
-		log.Println("Error upgrading to WebSocket: l156", err)
-		return
-	}
 	roomIDInt, _ := strconv.Atoi(roomID)
-	AddRoomUser(db, roomIDInt, userID)
-	usersIDs, _ := GetUsersInRoom(db, roomID)
-
 	var answer []string
 	var lettre string
 	var tabAnswer [][]string
 	var tabNul [][]string
-
-	// game
-	if !isStarted {
-		for {
-			nbPlayer := len(usersIDs)
-			maxPlayer, err := GetMaxPlayersForRoom(db, roomIDInt)
-			if err != nil {
-				fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
-				return
-			}
-			fmt.Println("usersIDs : ", usersIDs, nbPlayer)
-			sendWaitingRoom(room, nbPlayer, maxPlayer, iDCreatorOfRoom)
-			_, p, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("Error reading message:", err)
-				mutex.Lock()
-				delete(room.Connections, conn)
-				mutex.Unlock()
-				return
-			}
-
-			donnee, err := parseEventData(p)
-			if err != nil {
-				fmt.Println("Erreur lors de la conversion des données:", err)
-				return
-			}
-			if donnee.Event == "start" {
-				fmt.Printf("start")
-				isStarted = !isStarted
-				sendStartSignal(room)
-				break 
-			}
-		}
-	} 
-	if isStarted {
-		usersIDs,_=GetUsersInRoom(db, roomID)
+	if err != nil {
+		fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
+		return
+	}
+	cookie, err := r.Cookie("auth_token")
+	if err != nil {
+		fmt.Println("Erreur lors de la récupération du cookie :", err)
+		return
+	}
+	fmt.Println("Valeur du cookie:", cookie.Value)
+	userID, _ := GetUserIDByUsername(db, cookie.Value)
+	if userID == iDCreatorOfRoom {
+		fmt.Println("----------------------------START----------------------------")
 		for i := 0; i < round; i++ {
-			//Score
-			fmt.Println("usersIDs : ", usersIDs)
+			fmt.Println("---------------------------------DEB DU TOUR---------------------------------")
+			usersIDs, _ := GetUsersInRoom(db, roomID)
 			userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
-
 			if err != nil {
 				fmt.Println("Erreur lors de la get scores:", err)
 				return
@@ -168,11 +139,9 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 				return userScores[i][1] < userScores[j][1]
 			})
 			sendScores(room, userScores)
+
 			tabAnswer = tabNul
-			if err != nil {
-				fmt.Println("Erreur lors de la conversion des données:", err)
-				return
-			}
+
 			//init round time+lettre
 			stop := make(chan struct{})
 			if userID == iDCreatorOfRoom {
@@ -181,7 +150,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 			}
 			//read message
 			for {
-				_, p, err := conn.ReadMessage()
+				_, mess, err := conn.ReadMessage()
 				if err != nil {
 					log.Println("Error reading message:", err)
 					mutex.Lock()
@@ -189,25 +158,27 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 					mutex.Unlock()
 					return
 				}
-
-				donnee, err := parseEventData(p)
+				fmt.Println("4")
+				dataGame, err := parseEventData(mess)
+				fmt.Println("5")
 				if err != nil {
+
 					fmt.Println("Erreur lors de la conversion des données:", err)
 					return
 				}
-				fmt.Println("donne.data : ", donnee.Data)
-
-				if donnee.Event == "end" {
-					endStart(room)
+				fmt.Println("6")
+				fmt.Println("donne.data : ", dataGame.Data)
+				if dataGame.Event == "end" {
 					stopTimer(stop)
-
-				} else if donnee.Event == "catchBackData" {
-					answer = donnee.Data
+					endStart(room)
+				} else if dataGame.Event == "catchBackData" {
+					answer = dataGame.Data
 					tabAnswer = append(tabAnswer, answer)
-					fmt.Println(tabAnswer)
-					if userID == iDCreatorOfRoom {
-						if len(tabAnswer) == len(usersIDs) {
-							addScore(tabAnswer, lettre, roomIDInt, userID, db)
+					fmt.Println("tabAnswer : ", tabAnswer)
+					fmt.Println("usersIDs : ", usersIDs)
+					if len(tabAnswer) == len(usersIDs) {
+						if userID == iDCreatorOfRoom {
+							go addScore(tabAnswer, lettre, roomIDInt, db)
 							break
 						}
 					}
@@ -215,4 +186,5 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 			}
 		}
 	}
+
 }
