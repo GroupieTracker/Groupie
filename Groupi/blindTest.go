@@ -12,10 +12,9 @@ import (
 	"sync"
 	"time"
 
+	websocket "github.com/gorilla/websocket"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2/clientcredentials"
-
-	websocket "github.com/gorilla/websocket"
 )
 
 var spotifyClient *spotify.Client
@@ -205,9 +204,9 @@ func loadSpotifyTracks(filename string) {
 	}
 }
 
-func WsBlindTest(w http.ResponseWriter, r *http.Request, username string) {
+func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	roomID := r.URL.Query().Get("room")
-	userName = username
+	username := "feur"
 	if roomID == "" {
 		roomID = "blindTest"
 	}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="icon" href="assets/pictures/logo-32x32.png" type="image/icon type">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const games = document.querySelectorAll('.game');
+            games.forEach(function(game) {
+                game.addEventListener('click', function() {
+                    const form = game.querySelector('form');
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            });
+
+            const joinButton = document.getElementById('join-room');
+            joinButton.addEventListener('click', function() {
+                const roomCodeInput = document.getElementById('room-code');
+                roomCodeInput.focus();
+            });
+
+            const roomCodeInput = document.getElementById('room-code');
+            roomCodeInput.addEventListener('input', function() {
+                if (roomCodeInput.value.length === 3) {
+                    window.location.href = 'GuessTheSong?room=' + roomCodeInput.value;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+  <img id="background-image">
+  <nav>
+    <a href="/lobby">
+      <img id="logo">
+    </a>
+    <a href="/logout"><span class="material-symbols-outlined logout-icon">logout</span></a>
+  </nav>
+  <div class="room-container">
+    <div class="room-list">
+        <div class="room-outline">
+            <div class="room-title">Rooms</div>
+            <div class="room-items">
+                {{range .}}
+                <a href="GuessTheSong?room={{index . 1}}" class="room">
+                    <div class="room-name">{{index . 0}}</div>
+                </a>
+                {{end}}
+            </div>
+        </div>
+        <div class="room-buttons">
+          <a href="LobGuessthesong">
+            <button id="create-room">Créer ta room</button>
+          </a>
+            <button id="join-room">Join the room</button>
+            <input type="text" id="room-code" placeholder="Enter room code">
+        </div>
+    </div>
+  </div>
+</body>
+</html>

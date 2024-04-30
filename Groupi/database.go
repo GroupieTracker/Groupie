@@ -233,3 +233,50 @@ func GetUsernameByEmailOrUsername(db *sql.DB, identifier string) (string, error)
 
 	return username, nil
 }
+
+func ClearDatabase(db *sql.DB) error {
+	_, err := db.Exec("DELETE FROM ROOM_USERS")
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec("DELETE FROM ROOMS")
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec("DELETE FROM GAMES")
+	if err != nil {
+		return err
+	}
+	// _, err = db.Exec("DELETE FROM USER")
+	// if err != nil {
+	//     return err
+	// }
+	return nil
+}
+
+func GetRoomsByGameCategory(db *sql.DB, categoryName string) ([][]string, error) {
+	var rooms [][]string
+	query := `
+        SELECT r.name, r.id
+        FROM ROOMS r
+        INNER JOIN GAMES g ON r.id_game = g.id
+        WHERE g.name = ?`
+	rows, err := db.Query(query, categoryName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var roomName string
+		var roomID int
+		if err := rows.Scan(&roomName, &roomID); err != nil {
+			return nil, err
+		}
+		rooms = append(rooms, []string{roomName, strconv.Itoa(roomID)})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return rooms, nil
+}

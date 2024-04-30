@@ -6,6 +6,7 @@
     <title>Lobby</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="icon" href="assets/pictures/logo-32x32.png" type="image/icon type">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const games = document.querySelectorAll('.game');
@@ -24,17 +25,17 @@
     <a href="/logout"><span class="material-symbols-outlined logout-icon">logout</span></a>
     <div class="container-game">
         <div class="game" id="blindtest">
-            <form action="/BlindTest" method="post">
+            <form action="/ListBlindtest" method="post">
                 <button class="hidden-button" type="submit">Jouer</button>
             </form>
         </div>
         <div class="game" id="deaftest">
-            <form action="/GuessTheSong" method="post">
+            <form action="/ListGuessthesong" method="post">
                 <button class="hidden-button" type="submit">Jouer</button>
             </form>
         </div>
         <div class="game" id="petit-bac">
-            <form action="/Scattergories?room=dfghj" method="post">
+            <form action="/ListLobOfScattergories" method="post">
                 <button class="hidden-button" type="submit">Jouer</button>
             </form>
         </div>
