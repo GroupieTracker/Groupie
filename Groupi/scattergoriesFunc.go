@@ -1,14 +1,16 @@
 package Groupi
 
-import(
+import (
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"time"
+
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
 )
+
 type BackData struct {
 	Event string   `json:"event"`
 	Data  []string `json:"data"`
@@ -46,7 +48,7 @@ func bouclTimer(room *Room, timeForRound int, stop <-chan struct{}) {
 	}
 }
 
-func sendWaitingRoom(room *Room, nbPlayer int , maxPlayer int, username string) {
+func sendWaitingRoom(room *Room, nbPlayer int, maxPlayer int, username string) {
 	var tab []any
 	tab = append(tab, nbPlayer)
 	tab = append(tab, maxPlayer)
@@ -156,13 +158,12 @@ func stopTimer(stop chan<- struct{}) {
 	stop <- struct{}{}
 }
 
-
 func sendStartSignal(room *Room) {
 	tabscores := struct {
-		Event  string     `json:"event"`
+		Event   string `json:"event"`
 		Nothing string `json:"nothing"`
 	}{
-		Event:  "start",
+		Event:   "start",
 		Nothing: "r",
 	}
 	data, err := json.Marshal(tabscores)
