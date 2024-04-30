@@ -30,6 +30,7 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, nil)
 }
+
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./static/guessTheSong.html")
 	if err != nil {
@@ -38,6 +39,7 @@ func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, nil)
 }
+
 func GoScattergories(w http.ResponseWriter, r *http.Request, username string) {
 	tmpl, err := template.ParseFiles("./static/scattergories/scattergories.html")
 	if err != nil {
@@ -45,6 +47,15 @@ func GoScattergories(w http.ResponseWriter, r *http.Request, username string) {
 		return
 	}
 	tmpl.Execute(w, username)
+}
+
+func GoWattingForScattergories(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/scattergories/roomWaiting.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
 }
 
 func ruleScattergories(r *http.Request) (string, int, int, int) {
@@ -79,8 +90,8 @@ func GoListScattergories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
-		defer db.Close()
-	tab , _ :=Groupi.GetRoomsByGameCategory(db , "scattergories")
+	defer db.Close()
+	tab, _ := Groupi.GetRoomsByGameCategory(db, "scattergories")
 	tmpl.Execute(w, tab)
 }
 
@@ -88,12 +99,15 @@ func main() {
 	var time int
 	var nbRound int
 	var username string
+
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
 	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
+	http.HandleFunc("/WaitingRoomForScattergories/webs", Groupi.WsWaitingRoom)
+
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
 	http.HandleFunc("/ListLobOfScattergories", GoListScattergories)
 	http.HandleFunc("/logout", Logout)
@@ -120,20 +134,32 @@ func main() {
 		GoGuessTheSong(w, r)
 	})
 	http.HandleFunc("/Scattergories/webs", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("auth_token")
+		if err != nil {
+			fmt.Println("Erreur lors de la récupération du cookie :", err)
+			return
+		}
+		username = cookie.Value
 		db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 		defer db.Close()
 		roomID := r.URL.Query().Get("room")
 		roomIDInt, _ := strconv.Atoi(roomID)
-		userID,_:=Groupi.GetUserIDByUsername(db,username)
+		userID, _ := Groupi.GetUserIDByUsername(db, username)
 		Groupi.AddRoomUser(db, roomIDInt, userID)
-		fmt.Println(roomIDInt , userID)
+		fmt.Println(roomIDInt, userID)
 		usersIDs, _ := Groupi.GetUsersInRoom(db, roomID)
 		fmt.Println(usersIDs)
-		Groupi.WsScattergories(w, r, time, nbRound , userID)
+		Groupi.WsScattergories(w, r, time, nbRound)
 	})
 
 	http.HandleFunc("/RuleForScattergories", func(w http.ResponseWriter, r *http.Request) {
 		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+		cookie, err := r.Cookie("auth_token")
+		if err != nil {
+			fmt.Println("Erreur lors de la récupération du cookie :", err)
+			return
+		}
+		username = cookie.Value
 		// Groupi.ClearDatabase(db)
 		defer db.Close()
 		nameRooms, nbPlayer, ti, nbRo := ruleScattergories(r)
@@ -161,12 +187,16 @@ func main() {
 		}
 		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
 		id := strconv.Itoa(roomID)
-		http.Redirect(w, r, "/Scattergories?room="+id, http.StatusSeeOther)
+		http.Redirect(w, r, "/WaitingRoomForScattergories?room="+id, http.StatusSeeOther)
 
 	})
 
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
 		GoScattergories(w, r, username)
+	})
+
+	http.HandleFunc("/WaitingRoomForScattergories", func(w http.ResponseWriter, r *http.Request) {
+		GoWattingForScattergories(w, r)
 	})
 
 	fs := http.FileServer(http.Dir("static"))

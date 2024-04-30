@@ -10,7 +10,6 @@ import (
 type Room struct {
 	ID          string
 	Connections map[*websocket.Conn]bool
-	IsStarted   bool
 }
 
 var (

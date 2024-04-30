@@ -78,7 +78,7 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
 	}
 }
 
-func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int, userID int) {
+func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int) {
 	var err error
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
@@ -91,7 +91,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		room = &Room{
 			ID:          roomID,
 			Connections: make(map[*websocket.Conn]bool),
-			IsStarted:   false,
 		}
 		rooms[roomID] = room
 	}
@@ -100,7 +99,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		log.Println("Error upgrading to WebSocket: l 141", err)
 		return
 	}
-	fmt.Println("----------------------------COUCOU----------------------------")
+	fmt.Println("----------------------------GAME----------------------------")
 	defer conn.Close()
 	mutex.Lock()
 	room.Connections[conn] = true
@@ -110,32 +109,48 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		log.Println("Error upgrading to WebSocket: l 151", err)
 		return
 	}
-	userNameOfCreator, _ := GetUsernameByID(db, iDCreatorOfRoom)
 	roomIDInt, _ := strconv.Atoi(roomID)
-	usersIDs, _ := GetUsersInRoom(db, roomID)
-
 	var answer []string
 	var lettre string
 	var tabAnswer [][]string
 	var tabNul [][]string
-	maxPlayer, err := GetMaxPlayersForRoom(db, roomIDInt)
 	if err != nil {
 		fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
 		return
 	}
+	cookie, err := r.Cookie("auth_token")
+	if err != nil {
+		fmt.Println("Erreur lors de la récupération du cookie :", err)
+		return
+	}
+	fmt.Println("Valeur du cookie:", cookie.Value)
+	userID, _ := GetUserIDByUsername(db, cookie.Value)
 	if userID == iDCreatorOfRoom {
-		isStarted := false
-		// game
-		if !isStarted {
+		fmt.Println("----------------------------START----------------------------")
+		for i := 0; i < round; i++ {
+			fmt.Println("---------------------------------DEB DU TOUR---------------------------------")
+			usersIDs, _ := GetUsersInRoom(db, roomID)
+			userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
+			if err != nil {
+				fmt.Println("Erreur lors de la get scores:", err)
+				return
+			}
+			sort.Slice(userScores, func(i, j int) bool {
+				return userScores[i][1] < userScores[j][1]
+			})
+			sendScores(room, userScores)
+
+			tabAnswer = tabNul
+
+			//init round time+lettre
+			stop := make(chan struct{})
+			if userID == iDCreatorOfRoom {
+				lettre = sendRandomLetter(room)
+				go bouclTimer(room, time, stop)
+			}
+			//read message
 			for {
-				fmt.Println("l129", room.IsStarted)
-				fmt.Println("----------------------------WATTING-ROOM----------------------------")
-				usersIDs, _ = GetUsersInRoom(db, roomID)
-				nbPlayer := len(usersIDs)
-				fmt.Println("usersIDs : ", usersIDs)
-				sendWaitingRoom(room, nbPlayer, maxPlayer, userNameOfCreator)
-				_, p, err := conn.ReadMessage()
-				fmt.Println("l1gdzadugyaz")
+				_, mess, err := conn.ReadMessage()
 				if err != nil {
 					log.Println("Error reading message:", err)
 					mutex.Lock()
@@ -143,97 +158,33 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 					mutex.Unlock()
 					return
 				}
-
-				donnee, err := parseEventData(p)
+				fmt.Println("4")
+				dataGame, err := parseEventData(mess)
+				fmt.Println("5")
 				if err != nil {
+
 					fmt.Println("Erreur lors de la conversion des données:", err)
 					return
 				}
-				if donnee.Event == "newPlayer" {
-					db, err = sql.Open("sqlite3", "./Groupi/BDD.db")
-					if err != nil {
-						log.Fatal("Error opening database:", err)
-					}
-					defer db.Close()
-					fmt.Println("newPLayer : ", donnee.Data[0])
-					id, _ := GetUserIDByUsername(db, donnee.Data[0])
-					err := AddRoomUser(db, roomIDInt, id)
-					if err != nil {
-						log.Println("Error reading message:", err)
-					}
-				} else if donnee.Event == "start" {
-					isStarted = true
-					go sendStartSignal(room)
-					break
-				}
-			}
-		}
-		if isStarted {
-			fmt.Println("l170", room.IsStarted)
-			fmt.Println("----------------------------START----------------------------")
-			for i := 0; i < round; i++ {
-				usersIDs, _ = GetUsersInRoom(db, roomID)
-				userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
-				if err != nil {
-					fmt.Println("Erreur lors de la get scores:", err)
-					return
-				}
-				sort.Slice(userScores, func(i, j int) bool {
-					return userScores[i][1] < userScores[j][1]
-				})
-				sendScores(room, userScores)
-
-				tabAnswer = tabNul
-
-				//init round time+lettre
-				stop := make(chan struct{})
-				if userID == iDCreatorOfRoom {
-					lettre = sendRandomLetter(room)
-					go bouclTimer(room, time, stop)
-				}
-				//read message
-				for {
-					fmt.Println("l193 UN TOUR")
-					fmt.Println("1")
-					_, mess, err := conn.ReadMessage()
-					fmt.Println("2")
-					if err != nil {
-						log.Println("Error reading message:", err)
-						mutex.Lock()
-						delete(room.Connections, conn)
-						mutex.Unlock()
-						return
-					}
-					fmt.Println("4")
-					dataGame, err := parseEventData(mess)
-					fmt.Println("5")
-					if err != nil {
-
-						fmt.Println("Erreur lors de la conversion des données:", err)
-						return
-					}
-					fmt.Println("6")
-					fmt.Println("donne.data : ", dataGame.Data)
-					if dataGame.Event == "end" {
-						stopTimer(stop)
-						endStart(room)
-					} else if dataGame.Event == "catchBackData" {
-						fmt.Println("l212", room.IsStarted)
-						answer = dataGame.Data
-						tabAnswer = append(tabAnswer, answer)
-						fmt.Println("tabAnswer : ", tabAnswer)
-						fmt.Println("usersIDs : ", usersIDs)
-						if len(tabAnswer) == len(usersIDs) {
-							if userID == iDCreatorOfRoom {
-								go addScore(tabAnswer, lettre, roomIDInt, db)
-								break
-							}
+				fmt.Println("6")
+				fmt.Println("donne.data : ", dataGame.Data)
+				if dataGame.Event == "end" {
+					stopTimer(stop)
+					endStart(room)
+				} else if dataGame.Event == "catchBackData" {
+					answer = dataGame.Data
+					tabAnswer = append(tabAnswer, answer)
+					fmt.Println("tabAnswer : ", tabAnswer)
+					fmt.Println("usersIDs : ", usersIDs)
+					if len(tabAnswer) == len(usersIDs) {
+						if userID == iDCreatorOfRoom {
+							go addScore(tabAnswer, lettre, roomIDInt, db)
+							break
 						}
-						fmt.Println("l220", room.IsStarted)
 					}
 				}
-				fmt.Println("---------------------------------FIN DU TOUR---------------------------------")
 			}
 		}
 	}
+
 }
