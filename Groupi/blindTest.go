@@ -27,6 +27,8 @@ var firstUser bool = true
 var ActMusic string = "https://open.spotify.com/embed/track/2uqYupMHANxnwgeiXTZXzd?&autoplay=1"
 var musicLock sync.Mutex
 var timerDataLock sync.Mutex
+var userName string = "ça marche à moitié"
+var trackTitle string
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -64,12 +66,13 @@ func sendMusic(room *Room, musicURL string) {
 
 	mutex.Lock()
 	defer mutex.Unlock()
+	trackTitle = GetTitle()
 
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, jsonData)
 		if err != nil {
 			log.Println("Error writing message:", err)
-			conn.Close()
+			//conn.Close()
 			delete(room.Connections, conn)
 		}
 	}
@@ -77,8 +80,8 @@ func sendMusic(room *Room, musicURL string) {
 
 func initSpotifyClient() *spotify.Client {
 	config := &clientcredentials.Config{
-		ClientID:     "5406ffed7c33489b915321267e3ca75f",
-		ClientSecret: "bbaefa27380049a39c30e53c9bddc0c6",
+		ClientID:     "77ac44bd776c43f5b83101eb965ce2a0",
+		ClientSecret: "d3caf0734bc84e439e02454b6510453e",
 		TokenURL:     spotify.TokenURL,
 	}
 
@@ -116,31 +119,30 @@ func extractTrackID(spotifyLink string) string {
 }
 
 func bouclTimerBT(room *Room) {
-	if len(room.Connections) == 1 {
-		timeForRound := 10
-		for {
-			sendTimerBT(room, timeForRound)
-			timeForRound = timeForRound - 1
-			time.Sleep(1 * time.Second)
-			if timeForRound < 0 {
-				musicLock.Lock()
-				SpotifyMusic(room)
-				musicLock.Unlock()
-				timeForRound = 10
-			}
-			TimerScore = timeForRound
+	fmt.Println(len(room.Connections))
+	timeForRound := 10
+	for {
+		sendTimerBT(room, timeForRound)
+		timeForRound = timeForRound - 1
+		time.Sleep(1 * time.Second)
+		if timeForRound < 0 {
+			musicLock.Lock()
+			SpotifyMusic(room)
+			musicLock.Unlock()
+			timeForRound = 10
 		}
+		TimerScore = timeForRound
 	}
 }
 
 func sendTimerBT(room *Room, time int) {
 	var title string
 	if Track != "" {
-		title = GetTitle()
+		title = trackTitle
 	} else {
-		title = "Austin"
+		title = "quoicoubebou des montagnes"
 	}
-	tabTime := struct {
+	tabScore := struct {
 		Event string `json:"event"`
 		Time  int    `json:"time"`
 		Title string `json:"title"`
@@ -149,17 +151,40 @@ func sendTimerBT(room *Room, time int) {
 		Time:  time,
 		Title: title,
 	}
-	data, err := json.Marshal(tabTime)
-	if err != nil {
-		fmt.Println("Erreur de marshalling JSON:", err)
-		return
-	}
-
 	timerDataLock.Lock()
 	defer timerDataLock.Unlock()
 
 	for conn := range room.Connections {
-		err := conn.WriteMessage(websocket.TextMessage, data)
+		err := conn.WriteJSON(tabScore)
+		if err != nil {
+			log.Println("Error writing message:", err)
+			//conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+}
+
+func sendScoresBT(room *Room, scores string) {
+	fmt.Print("lalalalalalalallalalal")
+	scoreData := struct {
+		Event    string `json:"event"`
+		Username string `json:"username"`
+	}{
+		Event:    "music",
+		Username: userName,
+	}
+
+	jsonData, err := json.Marshal(scoreData)
+	if err != nil {
+		log.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, jsonData)
 		if err != nil {
 			log.Println("Error writing message:", err)
 			conn.Close()
@@ -167,7 +192,6 @@ func sendTimerBT(room *Room, time int) {
 		}
 	}
 }
-
 func loadSpotifyTracks(filename string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -181,8 +205,8 @@ func loadSpotifyTracks(filename string) {
 }
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("de")
 	roomID := r.URL.Query().Get("room")
+	username := "feur"
 	if roomID == "" {
 		roomID = "blindTest"
 	}
@@ -201,11 +225,14 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	defer conn.Close()
 
-	if firstUser == true {
+	// defer conn.Close()
+
+	if len(room.Connections) < 1 {
 		go bouclTimerBT(room)
 	}
+
+	sendScoresBT(room, username)
 
 	mutex.Lock()
 	room.Connections[conn] = true
