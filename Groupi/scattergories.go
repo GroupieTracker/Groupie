@@ -125,66 +125,64 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 	}
 	fmt.Println("Valeur du cookie:", cookie.Value)
 	userID, _ := GetUserIDByUsername(db, cookie.Value)
-	if userID == iDCreatorOfRoom {
-		fmt.Println("----------------------------START----------------------------")
-		for i := 0; i < round; i++ {
-			fmt.Println("---------------------------------DEB DU TOUR---------------------------------")
-			usersIDs, _ := GetUsersInRoom(db, roomID)
-			userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
+
+	fmt.Println("----------------------------START----------------------------")
+	for i := 0; i < round; i++ {
+		fmt.Println("---------------------------------DEB DU TOUR---------------------------------")
+		usersIDs, _ := GetUsersInRoom(db, roomID)
+		userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
+		if err != nil {
+			fmt.Println("Erreur lors de la get scores:", err)
+			return
+		}
+		sort.Slice(userScores, func(i, j int) bool {
+			return userScores[i][1] < userScores[j][1]
+		})
+
+		tabAnswer = tabNul
+
+		//init round time+lettre
+		stop := make(chan struct{})
+		if userID == iDCreatorOfRoom {
+			sendScores(room, userScores)
+			lettre = sendRandomLetter(room)
+			go bouclTimer(room, time, stop)
+		}
+		//read message
+		for {
+			_, mess, err := conn.ReadMessage()
 			if err != nil {
-				fmt.Println("Erreur lors de la get scores:", err)
+				log.Println("Error reading message:", err)
+				mutex.Lock()
+				delete(room.Connections, conn)
+				mutex.Unlock()
 				return
 			}
-			sort.Slice(userScores, func(i, j int) bool {
-				return userScores[i][1] < userScores[j][1]
-			})
-			sendScores(room, userScores)
+			dataGame, err := parseEventData(mess)
+			if err != nil {
 
-			tabAnswer = tabNul
-
-			//init round time+lettre
-			stop := make(chan struct{})
-			if userID == iDCreatorOfRoom {
-				lettre = sendRandomLetter(room)
-				go bouclTimer(room, time, stop)
+				fmt.Println("Erreur lors de la conversion des données:", err)
+				return
 			}
-			//read message
-			for {
-				_, mess, err := conn.ReadMessage()
-				if err != nil {
-					log.Println("Error reading message:", err)
-					mutex.Lock()
-					delete(room.Connections, conn)
-					mutex.Unlock()
-					return
-				}
-				fmt.Println("4")
-				dataGame, err := parseEventData(mess)
-				fmt.Println("5")
-				if err != nil {
-
-					fmt.Println("Erreur lors de la conversion des données:", err)
-					return
-				}
-				fmt.Println("6")
-				fmt.Println("donne.data : ", dataGame.Data)
-				if dataGame.Event == "end" {
-					stopTimer(stop)
-					endStart(room)
-				} else if dataGame.Event == "catchBackData" {
+			fmt.Println("donne.data : ", dataGame.Data)
+			if dataGame.Event == "end" {
+				stopTimer(stop)
+				endStart(room)
+			} else if dataGame.Event == "catchBackData" {
+				answer = dataGame.Data
+				sendData(room, answer)
+			} else if dataGame.Event == "allDataOnebyOne" {
+				if userID == iDCreatorOfRoom {
 					answer = dataGame.Data
 					tabAnswer = append(tabAnswer, answer)
-					fmt.Println("tabAnswer : ", tabAnswer)
-					fmt.Println("usersIDs : ", usersIDs)
 					if len(tabAnswer) == len(usersIDs) {
-						if userID == iDCreatorOfRoom {
-							go addScore(tabAnswer, lettre, roomIDInt, db)
-							break
-						}
+						addScore(tabAnswer, lettre, roomIDInt, db)
+						break
 					}
 				}
 			}
 		}
+
 	}
 
 }

@@ -39,7 +39,9 @@
       var roomID = params.get("room");
       const scor = document.querySelector(".scor");
       var ws = new WebSocket(
-        "ws://localhost:8080/Scattergories/webs?room=" + roomID
+        // "ws://localhost:8080/Scattergories/webs?room=" + roomID
+          "ws://10.70.6.24:8080/Scattergories/webs?room=" + roomID
+        
       );
       const userName = getCookie("auth_token");
       ws.onmessage = function (event) {
@@ -47,7 +49,7 @@
         console.log(data);
         if (data.event == "fetchData") {
           collectAndSendValues();
-        }  else if (data.event == "timer") {
+        } else if (data.event == "timer") {
           var timer = document.getElementById("timer");
           timer.textContent = data.time;
         } else if (data.event == "letter") {
@@ -70,9 +72,19 @@
             scor.appendChild(pseudo);
             scor.appendChild(scored);
           });
-        } 
+        }else if (data.event == "dataForSend") {
+          const dataToSend = {
+          Event: "allDataOnebyOne",
+          Data: data.data,
+        };
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(dataToSend));
+        } else {
+          console.error("WebSocket is not open.");
+        }
+        }
       };
-   
+
       function getCookie() {
         var cookies = document.cookie.split("; ");
         for (var i = 0; i < cookies.length; i++) {
@@ -85,18 +97,6 @@
         }
         return null;
       }
-      function newPlayer (userName)  {
-        console.log("newPLayer");
-        const dataToSend = {
-          Event: "newPlayer",
-          Data: [userName],
-        };
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(dataToSend));
-        } else {
-          console.error("WebSocket is not open.");
-        }
-      };
 
       function collectAndSendValues() {
         const dataToSend = {
@@ -108,7 +108,7 @@
         inputs.forEach(function (input) {
           dataToSend.Data.push(input.value);
         });
-        console.log("envoie" , dataToSend.Data);
+        console.log("envoie", dataToSend.Data);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(dataToSend));
         } else {

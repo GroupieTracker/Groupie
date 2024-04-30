@@ -28,7 +28,7 @@
             const roomCodeInput = document.getElementById('room-code');
             roomCodeInput.addEventListener('input', function() {
                 if (roomCodeInput.value.length === 3) {
-                    window.location.href = 'Scattergories?room=' + roomCodeInput.value;
+                    window.location.href = 'WaitingRoomForScattergories?room=' + roomCodeInput.value;
                 }
             });
         });
@@ -48,7 +48,7 @@
             <div class="room-title">Rooms</div>
             <div class="room-items">
                 {{range .}}
-                <a href="Scattergories?room={{index . 1}}" class="room">
+                <a href="WaitingRoomForScattergories?room={{index . 1}}" class="room">
                     <div class="room-name">{{index . 0}}</div>
                 </a>
                 {{end}}

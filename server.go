@@ -221,7 +221,7 @@ func main() {
 			fmt.Println("Erreur lors de la récupération du cookie :", err)
 			return
 		}
-		// Groupi.ClearDatabase(db)
+		Groupi.ClearDatabase(db)
 		username = cookie.Value
 
 		defer db.Close()

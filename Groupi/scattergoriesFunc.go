@@ -182,3 +182,28 @@ func sendStartSignal(room *Room) {
 		}
 	}
 }
+
+func sendData(room *Room, data []string) {
+	tabId := struct {
+		Event string   `json:"event"`
+		Data  []string `json:"data"`
+	}{
+		Event: "dataForSend",
+		Data:  data,
+	}
+	tab, err := json.Marshal(tabId)
+	if err != nil {
+		fmt.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, tab)
+		if err != nil {
+			log.Println("Error writing message:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+}
