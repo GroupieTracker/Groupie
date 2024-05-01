@@ -27,8 +27,9 @@ var firstUser bool = true
 var ActMusic string = "https://open.spotify.com/embed/track/2uqYupMHANxnwgeiXTZXzd?&autoplay=1"
 var musicLock sync.Mutex
 var timerDataLock sync.Mutex
-var userName string = "ça marche à moitié"
+var userName string
 var trackTitle string
+var playerInRoom []string
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -143,13 +144,15 @@ func sendTimerBT(room *Room, time int) {
 		title = "quoicoubebou des montagnes"
 	}
 	tabScore := struct {
-		Event string `json:"event"`
-		Time  int    `json:"time"`
-		Title string `json:"title"`
+		Event    string `json:"event"`
+		Time     int    `json:"time"`
+		Title    string `json:"title"`
+		Username string `json:"username"`
 	}{
-		Event: "timer",
-		Time:  time,
-		Title: title,
+		Event:    "timer",
+		Time:     time,
+		Title:    title,
+		Username: userName,
 	}
 	timerDataLock.Lock()
 	defer timerDataLock.Unlock()
@@ -205,8 +208,8 @@ func loadSpotifyTracks(filename string) {
 }
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request) {
+
 	roomID := r.URL.Query().Get("room")
-	username := "feur"
 	if roomID == "" {
 		roomID = "blindTest"
 	}
@@ -218,6 +221,26 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 			Connections: make(map[*websocket.Conn]bool),
 		}
 		rooms[roomID] = room
+	}
+cook:
+	cookie, err := r.Cookie("auth_token")
+	if err != nil {
+		fmt.Println("Erreur lors de la récupération du cookie :", err)
+		goto cook
+	}
+
+	fmt.Println(cookie.Value)
+	userName = cookie.Value
+	newPlayer := false
+
+	for _, name := range playerInRoom {
+		if cookie.Value == name {
+			newPlayer = true
+		}
+	}
+
+	if newPlayer == false {
+		playerInRoom = append(playerInRoom, cookie.Value)
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -232,7 +255,7 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 		go bouclTimerBT(room)
 	}
 
-	sendScoresBT(room, username)
+	// sendScoresBT(room, username)
 
 	mutex.Lock()
 	room.Connections[conn] = true

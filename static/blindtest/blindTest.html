@@ -23,7 +23,7 @@
     </style>
     <div id="timer" class="timer">Timer</div>
     <div id="title" class="title">title</div>
-    <div id="score" class="score">score</div>
+    <div id="username" class="score">username</div>
 
 
     <input id="answer" type="text">
@@ -46,6 +46,8 @@
               timer.textContent = data.time;
               var title = document.getElementById("title");
               title.textContent = "Titre de la piste : " + data.title;
+              var username = document.getElementById("username");
+              username.textContent = data.username
               checkAnswer(data.title);
             } else if (data.event == "music") {
               var spotifyIframe = document.getElementById("spotifyIframe");
@@ -95,32 +97,6 @@
               ws.send(JSON.stringify(dataToSend));
             } else {
               console.error("WebSocket is not open.");
-            }
-          }
-
-
-          function end() {
-            var inputs = document.querySelectorAll('input[type="text"]');
-            var lettre = document.getElementById("lettre");
-            var good = true;
-            inputs.forEach(function (input) {
-              if (
-                input.value.charAt(0).toLowerCase() !==
-                lettre.textContent.toLowerCase()
-              ) {
-                good = false;
-              }
-            });
-            const dataToSend = {
-              Event: "end",
-              Data: [],
-            };
-            if (good) {
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(dataToSend));
-              } else {
-                console.error("WebSocket is not open.");
-              }
             }
           }
       </script>
