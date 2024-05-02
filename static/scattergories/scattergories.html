@@ -10,29 +10,13 @@
       <div id="timer">Timer</div>
       <div id="lettre">Lettre</div>
       <div class="scor"></div>
-      <table>
-        <thead>
-          <tr>
-            <th>Artiste</th>
-            <th>Album</th>
-            <th>Groupe de musique</th>
-            <th>Instrument de musique</th>
-            <th>Featuring</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><input type="text" name="artiste" /></td>
-            <td><input type="text" name="album" /></td>
-            <td><input type="text" name="group" /></td>
-            <td><input type="text" name="instru" /></td>
-            <td><input type="text" name="feat" /></td>
-            <td>
-              <input type="button" value="Fini" onclick="end()" />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="game">
+        {{range .}}
+        <div>{{.}}</div>
+        <input type="text">
+        {{end}}
+        <input type="button" value="Fini" onclick="end()" />
+      </div>
     </section>
     <script>
       var params = new URLSearchParams(window.location.search);

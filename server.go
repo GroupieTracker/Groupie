@@ -39,13 +39,13 @@ func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func GoScattergories(w http.ResponseWriter, r *http.Request, username string) {
+func GoScattergories(w http.ResponseWriter, r *http.Request, category []string) {
 	tmpl, err := template.ParseFiles("./static/scattergories/scattergories.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, username)
+	tmpl.Execute(w, category)
 }
 
 func GoWattingForScattergories(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +57,7 @@ func GoWattingForScattergories(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func ruleScattergories(r *http.Request) (string, int, int, int) {
+func ruleScattergories(r *http.Request) (string, int, int, int, []string) {
 	if r.Method == http.MethodPost {
 		err := r.ParseForm()
 		if err != nil {
@@ -67,10 +67,12 @@ func ruleScattergories(r *http.Request) (string, int, int, int) {
 		nbPlayer, _ := strconv.Atoi(r.FormValue("nbPlayer"))
 		time, _ := strconv.Atoi(r.FormValue("time"))
 		round, _ := strconv.Atoi(r.FormValue("nbRound"))
-		return name, nbPlayer, time, round
+		category := r.Form["categ"]
+
+		return name, nbPlayer, time, round, category
 
 	}
-	return "", -1, -1, -1
+	return "", -1, -1, -1, nil
 }
 
 func ruleBlindtest(r *http.Request) (string, int, int, int) {
@@ -95,7 +97,7 @@ func GoListBlindtest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+	db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 	defer db.Close()
 	tab, _ := Groupi.GetRoomsByGameCategory(db, "blindtest")
 	tmpl.Execute(w, tab)
@@ -125,7 +127,7 @@ func GoListGuessthesong(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+	db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 	defer db.Close()
 	tab, _ := Groupi.GetRoomsByGameCategory(db, "guessthesong")
 	tmpl.Execute(w, tab)
@@ -146,7 +148,7 @@ func GoListScattergories(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+	db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 	defer db.Close()
 	tab, _ := Groupi.GetRoomsByGameCategory(db, "scattergories")
 	tmpl.Execute(w, tab)
@@ -156,6 +158,7 @@ func main() {
 	var time int
 	var nbRound int
 	var username string
+	var category []string
 
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/login", Login)
@@ -215,7 +218,7 @@ func main() {
 	})
 
 	http.HandleFunc("/RuleForScattergories", func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+		db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 		cookie, err := r.Cookie("auth_token")
 		if err != nil {
 			fmt.Println("Erreur lors de la récupération du cookie :", err)
@@ -225,8 +228,9 @@ func main() {
 		username = cookie.Value
 
 		defer db.Close()
-		nameRooms, nbPlayer, ti, nbRo := ruleScattergories(r)
+		nameRooms, nbPlayer, ti, nbRo, cat := ruleScattergories(r)
 		time = ti
+		category = cat
 		nbRound = nbRo
 		newGame := Groupi.Game{
 			Name: "scattergories",
@@ -247,15 +251,16 @@ func main() {
 			MaxPlayers: nbPlayer,
 			Name:       nameRooms,
 			GameID:     gameID,
+			Category:   category,
 		}
-		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
+		roomID, _ := Groupi.CreateRoomAndGetID(db, newRoom)
 		id := strconv.Itoa(roomID)
 		http.Redirect(w, r, "/WaitingRoomForScattergories?room="+id, http.StatusSeeOther)
 
 	})
 
 	http.HandleFunc("/RuleForBlindtest", func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+		db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 		defer db.Close()
 		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
 		time = ti
@@ -280,14 +285,14 @@ func main() {
 			Name:       nameRooms,
 			GameID:     gameID,
 		}
-		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
+		roomID, _ := Groupi.CreateRoomAndGetID(db, newRoom)
 		id := strconv.Itoa(roomID)
 		http.Redirect(w, r, "/BlindTest?room="+id, http.StatusSeeOther)
 
 	})
 
 	http.HandleFunc("/RuleForGuessthesong", func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+		db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 		defer db.Close()
 		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
 		time = ti
@@ -312,14 +317,14 @@ func main() {
 			Name:       nameRooms,
 			GameID:     gameID,
 		}
-		roomID, err := Groupi.CreateRoomAndGetID(db, newRoom)
+		roomID, _ := Groupi.CreateRoomAndGetID(db, newRoom)
 		id := strconv.Itoa(roomID)
 		http.Redirect(w, r, "/GuessTheSong?room="+id, http.StatusSeeOther)
 
 	})
 
 	http.HandleFunc("/Scattergories", func(w http.ResponseWriter, r *http.Request) {
-		GoScattergories(w, r, username)
+		GoScattergories(w, r, category)
 	})
 
 	http.HandleFunc("/WaitingRoomForScattergories", func(w http.ResponseWriter, r *http.Request) {

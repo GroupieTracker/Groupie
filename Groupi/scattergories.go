@@ -114,10 +114,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 	var lettre string
 	var tabAnswer [][]string
 	var tabNul [][]string
-	if err != nil {
-		fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
-		return
-	}
 	cookie, err := r.Cookie("auth_token")
 	if err != nil {
 		fmt.Println("Erreur lors de la récupération du cookie :", err)

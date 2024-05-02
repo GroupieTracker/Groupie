@@ -22,8 +22,42 @@
         
         <label for="nbRound">Nombre de tours</label>
         <input type="text" id="nbRound" name="nbRound"value="123">
-        <input type="submit">
-    </form>
+
+        <h3>Categories</h3>
+        <div id="inputs-container" >
+        </div>
+    
+    
+    
+    <input type="submit">
+</form>
+<button onclick="ajouterInput()">Ajouter Input</button>
+
+    <script>
+        ajouterInput("Artiste");
+        ajouterInput("Album");
+        ajouterInput("Groupe de musique");
+        ajouterInput("Instrument de musique");
+        ajouterInput("Featuring");
+function ajouterInput(value) {
+    var container = document.getElementById('inputs-container');
+    var nouvelInput = document.createElement('input');
+    nouvelInput.name = 'categ';
+    nouvelInput.type = 'text';
+    container.appendChild(nouvelInput);
+    if (value) {
+        nouvelInput.value = value;
+    }
+    var boutonSuppression = document.createElement('button');
+    boutonSuppression.textContent = 'Supprimer';
+    boutonSuppression.onclick = function() {
+        container.removeChild(nouvelInput);
+        container.removeChild(boutonSuppression);
+    };
+    container.appendChild(boutonSuppression);
+}
+
+    </script>
     
 </body>
 </html>

@@ -20,6 +20,7 @@ type Roomms struct {
 	MaxPlayers int
 	Name       string
 	GameID     int
+	Category   []string
 }
 
 func InitializeDatabase() {
