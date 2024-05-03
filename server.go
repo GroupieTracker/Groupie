@@ -21,6 +21,15 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/index.html")
 }
 
+func Team(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/team.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
+}
+
 func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./static/blindtest/blindTest.html")
 	if err != nil {
@@ -158,6 +167,7 @@ func main() {
 	var username string
 
 	http.HandleFunc("/", Home)
+	http.HandleFunc("/team", Team)
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)

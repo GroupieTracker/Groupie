@@ -382,3 +382,71 @@ input[type="submit"] {
 input[type="submit"]:hover {
     background-color: var(--tertiary-color);
 }
+
+/* Footer */
+
+footer {
+    position: absolute;
+    background-color: transparent;
+    color: var(--text-color);
+    text-align: center;
+    padding: 20px;
+    bottom: 0;
+    background-color: var(--secondary-color);
+    width: 100%;
+}
+
+footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+/* Team */
+
+.team-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-wrap: wrap;
+}
+
+.team-card {
+    background-color: var(--primary-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    height: 200px;
+    text-align: center;
+    transition: transform 0.3s;
+    margin: 10px;
+}
+
+.team-card:hover {
+    transform: translateY(-5px);
+}
+
+.team-name {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.team-role {
+    font-size: 22px;
+    color: var(--tertiary-color);
+    margin-bottom: 20px;
+}
+
+.team-creation {
+    text-align: left;
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.team-creation li {
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
