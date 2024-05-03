@@ -9,26 +9,14 @@
     <link rel="icon" href="assets/pictures/logo-32x32.png" type="image/icon type">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const games = document.querySelectorAll('.game');
-            games.forEach(function(game) {
-                game.addEventListener('click', function() {
-                    const form = game.querySelector('form');
-                    if (form) {
-                        form.submit();
-                    }
-                });
-            });
-
             const joinButton = document.getElementById('join-room');
             joinButton.addEventListener('click', function() {
                 const roomCodeInput = document.getElementById('room-code');
-                roomCodeInput.focus();
-            });
-
-            const roomCodeInput = document.getElementById('room-code');
-            roomCodeInput.addEventListener('input', function() {
-                if (roomCodeInput.value.length === 3) {
-                    window.location.href = 'GuessTheSong?room=' + roomCodeInput.value;
+                const roomCode = roomCodeInput.value.trim();
+                if (roomCode.length > 0) {
+                    window.location.href = 'GuessTheSong?room=' + roomCode;
+                } else {
+                    alert("Entrer un numéro de room");
                 }
             });
         });
@@ -58,8 +46,8 @@
           <a href="LobGuessthesong">
             <button id="create-room">Créer ta room</button>
           </a>
-            <button id="join-room">Join the room</button>
-            <input type="text" id="room-code" placeholder="Enter room code">
+          <input type="text" id="room-code" placeholder="Enter room code">
+          <button id="join-room">Join the room</button>
         </div>
     </div>
   </div>

@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creation de partie du Blintest</title>
+    <title>Création de partie du petit bac</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
-    <h2>Creation d'une room petit bac</h2>
+    <form id="form" action="/RuleForBlindtest" method="post">
+        <h2>Room</h2>
 
-    <form action="/RuleForBlindtest" method="post">
+        <label for="name">Nom de la room :</label>
+        <input type="text" id="name" name="name" placeholder="Entrez le nom de la room">
 
-        <label for="name">name</label>
-        <input type="text" id="name" name="name" value="name">
-        
-        <label for="nbPlayer">Nombre de joueur max</label>
-        <input type="text" id="nbPlayer"name="nbPlayer" value="11">
-        
-        <label for="time">temps / tours</label>
-        <input type="text" id="time" name="time" value="21">
-        
-        <label for="nbRound">Nombre de tours</label>
-        <input type="text" id="nbRound" name="nbRound"value="123">
-        <input type="submit">
+        <label for="nbPlayer">Nombre de joueurs maximum :</label>
+        <input type="text" id="nbPlayer" name="nbPlayer" placeholder="Entrez le nombre maximum de joueurs">
+
+        <label for="time">Temps par tour (en secondes) :</label>
+        <input type="text" id="time" name="time" placeholder="Entrez le temps par tour">
+
+        <label for="nbRound">Nombre de tours :</label>
+        <input type="text" id="nbRound" name="nbRound" placeholder="Entrez le nombre de tours">
+
+        <input type="submit" value="Créer la room">
     </form>
-    
+
 </body>
 </html>

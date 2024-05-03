@@ -9,26 +9,14 @@
     <link rel="icon" href="assets/pictures/logo-32x32.png" type="image/icon type">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const games = document.querySelectorAll('.game');
-            games.forEach(function(game) {
-                game.addEventListener('click', function() {
-                    const form = game.querySelector('form');
-                    if (form) {
-                        form.submit();
-                    }
-                });
-            });
-
             const joinButton = document.getElementById('join-room');
             joinButton.addEventListener('click', function() {
                 const roomCodeInput = document.getElementById('room-code');
-                roomCodeInput.focus();
-            });
-
-            const roomCodeInput = document.getElementById('room-code');
-            roomCodeInput.addEventListener('input', function() {
-                if (roomCodeInput.value.length === 3) {
-                    window.location.href = 'Scattergories?room=' + roomCodeInput.value;
+                const roomCode = roomCodeInput.value.trim();
+                if (roomCode.length > 0) {
+                    window.location.href = 'WaitingRoomForScattergories?room=' + roomCode;
+                } else {
+                    alert("Entrer un numéro de room");
                 }
             });
         });
@@ -48,7 +36,7 @@
             <div class="room-title">Rooms</div>
             <div class="room-items">
                 {{range .}}
-                <a href="Scattergories?room={{index . 1}}" class="room">
+                <a href="WaitingRoomForScattergories?room={{index . 1}}" class="room">
                     <div class="room-name">{{index . 0}}</div>
                 </a>
                 {{end}}
@@ -58,8 +46,8 @@
           <a href="LobScattergories">
             <button id="create-room">Créer ta room</button>
           </a>
+          <input type="text" id="room-code" placeholder="Enter room code">
             <button id="join-room">Join the room</button>
-            <input type="text" id="room-code" placeholder="Enter room code">
         </div>
     </div>
   </div>
