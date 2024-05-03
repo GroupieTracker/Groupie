@@ -55,44 +55,42 @@ func WsWaitingRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Valeur du cookie:", cookie.Value)
-	userID, _ := GetUserIDByUsername(db, cookie.Value)
+	// userID, _ := GetUserIDByUsername(db, cookie.Value)
 
-	if userID == iDCreatorOfRoom {
-		for {
-			usersIDs, _ := GetUsersInRoom(db, roomID)
-			nbPlayer := len(usersIDs)
-			sendWaitingRoom(room, nbPlayer, maxPlayer, userNameOfCreator)
-			_, p, err := conn.ReadMessage()
+	for {
+		usersIDs, _ := GetUsersInRoom(db, roomID)
+		nbPlayer := len(usersIDs)
+		sendWaitingRoom(room, nbPlayer, maxPlayer, userNameOfCreator)
+		_, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Error reading message:", err)
+			mutex.Lock()
+			delete(room.Connections, conn)
+			mutex.Unlock()
+			return
+		}
+
+		donnee, err := parseEventData(p)
+		fmt.Println(donnee)
+		if err != nil {
+			fmt.Println("Erreur lors de la conversion des données:", err)
+			return
+		}
+		if donnee.Event == "newPlayer" {
+			db, err = sql.Open("sqlite3", "./Groupi/BDD.db")
+			if err != nil {
+				log.Fatal("Error opening database:", err)
+			}
+			defer db.Close()
+			fmt.Println("newPLayer : ", donnee.Data[0])
+			id, _ := GetUserIDByUsername(db, donnee.Data[0])
+			err := AddRoomUser(db, roomIDInt, id)
 			if err != nil {
 				log.Println("Error reading message:", err)
-				mutex.Lock()
-				delete(room.Connections, conn)
-				mutex.Unlock()
-				return
 			}
-
-			donnee, err := parseEventData(p)
-			fmt.Println(donnee)
-			if err != nil {
-				fmt.Println("Erreur lors de la conversion des données:", err)
-				return
-			}
-			if donnee.Event == "newPlayer" {
-				db, err = sql.Open("sqlite3", "./Groupi/BDD.db")
-				if err != nil {
-					log.Fatal("Error opening database:", err)
-				}
-				defer db.Close()
-				fmt.Println("newPLayer : ", donnee.Data[0])
-				id, _ := GetUserIDByUsername(db, donnee.Data[0])
-				err := AddRoomUser(db, roomIDInt, id)
-				if err != nil {
-					log.Println("Error reading message:", err)
-				}
-			} else if donnee.Event == "start" {
-				sendStartSignal(room)
-				break
-			}
+		} else if donnee.Event == "start" {
+			sendStartSignal(room)
+			break
 		}
 	}
 }

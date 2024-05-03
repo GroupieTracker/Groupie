@@ -12,17 +12,19 @@ import (
 )
 
 type BackData struct {
-	Event string   `json:"event"`
-	Data  []string `json:"data"`
+	Event string     `json:"event"`
+	Data  []string   `json:"data"`
+	Data2 [][]string `json:"data2"`
 }
 
 func parseEventData(data []byte) (*BackData, error) {
-	var event BackData
-	err := json.Unmarshal(data, &event)
-	if err != nil {
-		return nil, err
+	var event1 BackData
+	err := json.Unmarshal(data, &event1)
+	if err == nil {
+		return &event1, nil
 	}
-	return &event, nil
+
+	return nil, fmt.Errorf("failed to parse data into BackData ")
 }
 
 func getRandomLetter() string {
@@ -31,6 +33,7 @@ func getRandomLetter() string {
 	return letters[randomIndex]
 }
 func bouclTimer(room *Room, timeForRound int, stop <-chan struct{}) {
+
 	timeactu := timeForRound
 	for {
 		select {
@@ -39,8 +42,8 @@ func bouclTimer(room *Room, timeForRound int, stop <-chan struct{}) {
 		default:
 			sendTimer(room, timeactu)
 			timeactu = timeactu - 1
-			if timeactu <= 0 {
-				endStart(room)
+			if timeactu <= -1 {
+				sendEvent(room, "fetchData")
 				return
 			}
 			time.Sleep(1 * time.Second)
@@ -70,7 +73,31 @@ func sendWaitingRoom(room *Room, nbPlayer int, maxPlayer int, username string) {
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
-			log.Println("Error writing message:", err)
+			log.Println("Error writing message SENDwAIITNGROOM:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+}
+func sendOpinion(room *Room, dd [][]string) {
+	tabscores := struct {
+		Event string     `json:"event"`
+		Opi   [][]string `json:"opi"`
+	}{
+		Event: "opinionForSend",
+		Opi:   dd,
+	}
+	data, err := json.Marshal(tabscores)
+	if err != nil {
+		fmt.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			log.Println("Error writing message SENDSCORE:", err)
 			conn.Close()
 			delete(room.Connections, conn)
 		}
@@ -96,7 +123,7 @@ func sendRandomLetter(room *Room) string {
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
-			log.Println("Error writing message:", err)
+			log.Println("Error writing message SEND RANDOM LETTRE:", err)
 			conn.Close()
 			delete(room.Connections, conn)
 		}
@@ -122,7 +149,7 @@ func sendTimer(room *Room, time int) {
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
-			log.Println("Error writing message:", err)
+			log.Println("Error writing message SEND TIMER:", err)
 			conn.Close()
 			delete(room.Connections, conn)
 		}
@@ -147,7 +174,7 @@ func sendScores(room *Room, scores [][]string) {
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
-			log.Println("Error writing message:", err)
+			log.Println("Error writing message SENDSCORE:", err)
 			conn.Close()
 			delete(room.Connections, conn)
 		}
@@ -176,7 +203,32 @@ func sendStartSignal(room *Room) {
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
-			log.Println("Error writing message:", err)
+			log.Println("Error writing message SEND SATRT SIGNAL:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+}
+
+func sendData(room *Room, data []string) {
+	tabId := struct {
+		Event string   `json:"event"`
+		Data  []string `json:"data"`
+	}{
+		Event: "dataForSend",
+		Data:  data,
+	}
+	tab, err := json.Marshal(tabId)
+	if err != nil {
+		fmt.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, tab)
+		if err != nil {
+			log.Println("Error writing message SEND dATA:", err)
 			conn.Close()
 			delete(room.Connections, conn)
 		}
