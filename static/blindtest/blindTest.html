@@ -28,17 +28,33 @@
 
     <input id="answer" type="text">
     <button onclick="startSending()">Start Sending</button>
+
+
+    <h1>Liste des joueurs</h1>
+    <ul id="players-list">
+    </ul>
         
     <script>
+          var usernameID
           var params = new URLSearchParams(window.location.search);
           var roomID = params.get("room");
-          var ws = new WebSocket("ws://10.70.5.231:8080/BlindTest/webs");
+          var ws = new WebSocket("ws://localhost:8080/BlindTest/webs");
           ws.onopen = ()=>console.log("open ws")
           ws.onclose = ()=>console.log("close ws")
           ws.onmessage = function (event) {
             console.log(event)
             var data = JSON.parse(event.data);
             console.log(data);
+            var authToken = document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/, "$1");
+
+            if (authToken) {
+              usernameID = authToken
+                 console.log("La valeur du cookie auth_token est :", authToken);
+              } else {
+                 console.log("Le cookie auth_token n'existe pas ou est vide.");
+              }
+
+
             if (data.event == "fetchData") {
               collectAndSendValues();
               console.log("ouais ça passe")
@@ -50,6 +66,11 @@
               var username = document.getElementById("username");
               username.textContent = data.username
               checkAnswer(data.title);
+              displayPlayers(data.players);
+              console.log(data.players)
+              if (data.wincond == true) {
+                window.location.href = "http://10.70.5.231:8080/ListBlindtest/winner";
+              }
             } else if (data.event == "music") {
               var spotifyIframe = document.getElementById("spotifyIframe");
               spotifyIframe.src = data.music;
@@ -63,20 +84,31 @@
           };
 
           function startSending() {
-            var inputText = document.getElementById('answer').value;
+    var authToken = document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/, "$1");
 
-            const dataToSend = {
-              Event: "answer",
-              Answer: inputText,
-            };
+    if (authToken) {
+        console.log("La valeur du cookie auth_token est :", authToken);
+    } else {
+        console.log("Le cookie auth_token n'existe pas ou est vide.");
+        return;
+    }
 
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify(dataToSend));
-            } else {
-              console.error("WebSocket is not open.");
-            }
+    var inputText = document.getElementById('answer').value;
+    var usernameID = document.getElementById('username').value;
+    console.log("answer:", inputText, "       username:", authToken)
+            
+    const dataToSend = {
+        Event: "answer",
+        Answer: inputText,
+        Username: authToken
+    };
 
-        }
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(dataToSend));
+    } else {
+        console.error("WebSocket is not open.");
+    }
+}
 
           function checkAnswer(title) {
             var answerInput = document.getElementById('answer');
@@ -107,7 +139,8 @@
           function sendAnswer(answer) {
             const dataToSend = {
               Event: "answer",
-              Answer: answer
+              Answer: answer,
+              Username: "feur"
             };
             if (ws.readyState === WebSocket.OPEN) {
               ws.send(JSON.stringify(dataToSend));
@@ -115,6 +148,16 @@
               console.error("WebSocket is not open.");
             }
           }
+
+          function displayPlayers(players) {
+            const playersList = document.getElementById("players-list");
+            playersList.innerHTML = ""; 
+            players.forEach(function(player) {
+                const listItem = document.createElement("li");
+                listItem.textContent = `${player.Pseudo}: ${player.Score}`;
+                playersList.appendChild(listItem);
+            });
+        }
       </script>
 </body>
 </html>

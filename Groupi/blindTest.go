@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -31,6 +32,8 @@ var userName string
 var trackTitle string
 var playerInRoom []string
 var inputAnswer string
+var playersInRoomStruct []Player
+var conWin bool = false
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -40,6 +43,12 @@ Start:
 		goto Start
 	}
 	return randomSpotifyTrack
+}
+
+type Player struct {
+	Pseudo string
+	Score  int
+	Status bool
 }
 
 func SpotifyMusic(room *Room) {
@@ -78,6 +87,18 @@ func sendMusic(room *Room, musicURL string) {
 			delete(room.Connections, conn)
 		}
 	}
+}
+
+func addPlayer(username string) {
+	// Vérifier si le joueur existe déjà
+	for _, player := range playersInRoomStruct {
+		if player.Pseudo == username {
+			return
+		}
+	}
+	// Le joueur n'existe pas, ajoutons-le
+	newPlayer := Player{Pseudo: username, Score: 0, Status: true}
+	playersInRoomStruct = append(playersInRoomStruct, newPlayer)
 }
 
 func initSpotifyClient() *spotify.Client {
@@ -128,6 +149,9 @@ func bouclTimerBT(room *Room) {
 		timeForRound = timeForRound - 1
 		time.Sleep(1 * time.Second)
 		if timeForRound < 0 {
+			for _, player := range playersInRoomStruct {
+				player.Status = true
+			}
 			musicLock.Lock()
 			SpotifyMusic(room)
 			musicLock.Unlock()
@@ -145,15 +169,19 @@ func sendTimerBT(room *Room, time int) {
 		title = "quoicoubebou des montagnes"
 	}
 	tabScore := struct {
-		Event    string `json:"event"`
-		Time     int    `json:"time"`
-		Title    string `json:"title"`
-		Username string `json:"username"`
+		Event    string   `json:"event"`
+		Time     int      `json:"time"`
+		Title    string   `json:"title"`
+		Username string   `json:"username"`
+		Players  []Player `json:"players"`
+		WinCond  bool     `json:"wincond"`
 	}{
 		Event:    "timer",
 		Time:     time,
 		Title:    title,
 		Username: userName,
+		Players:  playersInRoomStruct,
+		WinCond:  conWin,
 	}
 	timerDataLock.Lock()
 	defer timerDataLock.Unlock()
@@ -168,34 +196,6 @@ func sendTimerBT(room *Room, time int) {
 	}
 }
 
-func sendScoresBT(room *Room, scores string) {
-	fmt.Print("lalalalalalalallalalal")
-	scoreData := struct {
-		Event    string `json:"event"`
-		Username string `json:"username"`
-	}{
-		Event:    "music",
-		Username: userName,
-	}
-
-	jsonData, err := json.Marshal(scoreData)
-	if err != nil {
-		log.Println("Erreur de marshalling JSON:", err)
-		return
-	}
-
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	for conn := range room.Connections {
-		err := conn.WriteMessage(websocket.TextMessage, jsonData)
-		if err != nil {
-			log.Println("Error writing message:", err)
-			conn.Close()
-			delete(room.Connections, conn)
-		}
-	}
-}
 func loadSpotifyTracks(filename string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -206,6 +206,22 @@ func loadSpotifyTracks(filename string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func addScoreStruct(username string, score int) {
+	for i, player := range playersInRoomStruct {
+		if player.Pseudo == username {
+			playersInRoomStruct[i].Score += score
+			playersInRoomStruct[i].Status = false
+			return
+		}
+	}
+}
+
+func orderByScore(players []Player) {
+	sort.SliceStable(players, func(i, j int) bool {
+		return players[i].Score > players[j].Score
+	})
 }
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request) {
@@ -253,7 +269,7 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	room.Connections[conn] = true
 	mutex.Unlock()
 
-	if len(room.Connections) == 1 {
+	if len(room.Connections) <= 1 {
 		go bouclTimerBT(room)
 	}
 
@@ -269,10 +285,40 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		dataGame, err := parseEventData(mess)
+		if err != nil {
+			log.Println("Error parsing message:", err)
+			mutex.Lock()
+			delete(room.Connections, conn)
+			mutex.Unlock()
+			return
+		}
+
+		fmt.Println(dataGame)
+
+		addPlayer(dataGame.Username)
 
 		if dataGame.Event == "answer" {
-			inputAnswer == dataGame.answer
+			fmt.Println("ouais ouais")
+			fmt.Println("la réponse de:", dataGame.Username, " est:", dataGame.Answer)
+			inputAnswer = dataGame.Answer
+			if inputAnswer == trackTitle {
+				for _, player := range playersInRoomStruct {
+					fmt.Println(player.Status)
+					if player.Status == true && player.Pseudo == dataGame.Username {
+						addScoreStruct(dataGame.Username, 5)
+					}
+					if player.Score == 100 {
+						fmt.Println("le Gagnant est:", player.Pseudo)
+						conWin = true
+						return
+					}
+				}
+				fmt.Println("c'est le bon titre")
+			}
 		}
+
+		orderByScore(playersInRoomStruct)
+
 	}
 
 	mutex.Lock()

@@ -12,8 +12,10 @@ import (
 )
 
 type BackData struct {
-	Event string   `json:"event"`
-	Data  []string `json:"data"`
+	Event    string   `json:"event"`
+	Data     []string `json:"data"`
+	Answer   string   `json:"answer"`
+	Username string   `json:"username"`
 }
 
 func parseEventData(data []byte) (*BackData, error) {

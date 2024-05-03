@@ -30,6 +30,15 @@ func GoBlindTest(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
+func GoWinnerTest(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/blindtest/winner.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
+}
+
 func GoGuessTheSong(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./static/guessthesong/guessTheSong.html")
 	if err != nil {
@@ -192,6 +201,11 @@ func main() {
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
+
+	http.HandleFunc("ListBlindtest/winner", func(w http.ResponseWriter, r *http.Request) {
+		GoWinnerTest(w, r)
+	})
+
 	http.HandleFunc("/GuessTheSong", func(w http.ResponseWriter, r *http.Request) {
 		GoGuessTheSong(w, r)
 	})
