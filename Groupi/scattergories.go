@@ -2,146 +2,16 @@ package Groupi
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-func sendEndBut(room *Room) {
-	tabEnd := struct {
-		Event string `json:"event"`
-	}{
-		Event: "endNow",
-	}
-	data, err := json.Marshal(tabEnd)
-	if err != nil {
-		fmt.Println("Erreur de marshalling JSON:", err)
-		return
-	}
-	mutex.Lock()
-	defer mutex.Unlock()
-	for conn := range room.Connections {
-		err := conn.WriteMessage(websocket.TextMessage, data)
-		if err != nil {
-			log.Println("Error writing message SEND ENDBUT:", err)
-			conn.Close()
-			delete(room.Connections, conn)
-		}
-	}
-
-}
-func sendEvent(room *Room, eve string) {
-	if eve == "fetchData" {
-		stop := make(chan struct{})
-		go stopTimer(stop)
-	}
-	tabCatchData := struct {
-		Event string `json:"event"`
-		R     int    `json:"r"`
-	}{
-		Event: eve,
-		R:     -1,
-	}
-	data, err := json.Marshal(tabCatchData)
-	if err != nil {
-		fmt.Println("Erreur de marshalling JSON:", err)
-		return
-	}
-
-	for conn := range room.Connections {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(data))
-		if err != nil {
-			log.Println("Error writing message SEND EVENT:", err)
-			conn.Close()
-			delete(room.Connections, conn)
-		}
-	}
-
-}
-
-func sendScoreForResults(room *Room, lettre string, tabAnswer [][]string) {
-	tabScores := struct {
-		Event  string     `json:"event"`
-		Scores [][]string `json:"scores"`
-	}{
-		Event:  "resultsData",
-		Scores: tabAnswer,
-	}
-	data, err := json.Marshal(tabScores)
-	if err != nil {
-		fmt.Println("Erreur de marshalling JSON:", err)
-		return
-	}
-	mutex.Lock()
-	defer mutex.Unlock()
-	for conn := range room.Connections {
-		err := conn.WriteMessage(websocket.TextMessage, data)
-		if err != nil {
-			log.Println("Error writing message SENND SCOREFORRESULT:", err)
-			conn.Close()
-			delete(room.Connections, conn)
-		}
-	}
-
-}
-
-func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB, tabopinion [][][]string) {
-
-	fmt.Println("tab", tabAnswer)
-	nbCategories := len(tabAnswer[0]) - 1
-	unique := true
-	lettreMin := strings.ToLower(lettre)
-	lettreMaj := strings.ToUpper(lettre)
-	for i := 0; i < len(tabAnswer); i++ {
-		score := 0
-		for y := 1; y <= nbCategories; y++ {
-			unique = true
-			if tabAnswer[i][y] == "" {
-				score += 0
-			} else {
-				mot := tabAnswer[i][y]
-				if strings.HasPrefix(strings.ToLower(mot), lettreMin) || strings.HasPrefix(strings.ToUpper(mot), lettreMaj) {
-					for o := 0; o < len(tabAnswer); o++ {
-						if strings.ToLower(tabAnswer[i][y]) == strings.ToLower(tabAnswer[o][y]) && o != i {
-							unique = false
-						}
-					}
-					moy := 0.0
-					for j := 0; j < len(tabopinion); j++ {
-						sc, _ := strconv.Atoi(tabopinion[j][i][y])
-						moy += float64(sc)
-					}
-					moy = moy / float64(len(tabopinion))
-					if moy > 0.5 {
-						if unique {
-							score += 2
-						} else {
-							score += 1
-						}
-					} else {
-						score += 0
-					}
-				} else {
-					score += 0
-				}
-			}
-		}
-		idactu, _ := GetUserIDByUsername(db, tabAnswer[i][0])
-		err := UpdateRoomUserScore(db, roomIDInt, idactu, score)
-		if err != nil {
-			fmt.Println("Erreur lors de la conversion des données:", err)
-			return
-		}
-	}
-}
 
 func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, round int) {
 	var err error
@@ -204,7 +74,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 
 		//init round time+lettre
 		stop := make(chan struct{})
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 		if userID == iDCreatorOfRoom {
 			sendScores(room, userScores)
 			lettre = sendRandomLetter(room)
