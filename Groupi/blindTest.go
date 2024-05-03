@@ -222,25 +222,24 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 		}
 		rooms[roomID] = room
 	}
-cook:
+
 	cookie, err := r.Cookie("auth_token")
 	if err != nil {
 		fmt.Println("Erreur lors de la récupération du cookie :", err)
-		goto cook
+		return
 	}
 
-	fmt.Println(cookie.Value)
-	userName = cookie.Value
-	newPlayer := false
+	userName := cookie.Value
 
+	newPlayer := false
 	for _, name := range playerInRoom {
-		if cookie.Value == name {
+		if userName == name {
 			newPlayer = true
+			break
 		}
 	}
-
-	if newPlayer == false {
-		playerInRoom = append(playerInRoom, cookie.Value)
+	if !newPlayer {
+		playerInRoom = append(playerInRoom, userName)
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -249,15 +248,34 @@ cook:
 		return
 	}
 
-	// defer conn.Close()
+	mutex.Lock()
+	room.Connections[conn] = true
+	mutex.Unlock()
 
-	if len(room.Connections) < 1 {
+	if len(room.Connections) == 1 {
 		go bouclTimerBT(room)
 	}
 
-	// sendScoresBT(room, username)
+	fmt.Println(playerInRoom)
+
+	for {
+		_, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		log.Printf("Message reçu : %s\n", p)
+	}
 
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()
+
+	// for {
+	//     _, _, err := conn.ReadMessage()
+	//     if err != nil {
+	//         // Gérer l'erreur ou arrêter la boucle
+	//         break
+	//     }
+	// }
 }

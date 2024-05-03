@@ -27,6 +27,7 @@
 
 
     <input id="answer" type="text">
+    <button onclick="startSending()">Start Sending</button>
         
     <script>
           var params = new URLSearchParams(window.location.search);
@@ -61,6 +62,12 @@
             }
           };
 
+          function startSending() {
+            var inputText = document.getElementById('answer').value;
+            setInterval(function() {
+                socket.send(inputText);
+            }, 1000);
+        }
 
           function checkAnswer(title) {
             var answerInput = document.getElementById('answer');

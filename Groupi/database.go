@@ -82,6 +82,7 @@ func GetUserIDByUsername(db *sql.DB, username string) (int, error) {
 
 	return userID, nil
 }
+
 func DeleteRoomAndRoomUsersByID(db *sql.DB, roomID int) error {
 	tx, err := db.Begin()
 	if err != nil {
