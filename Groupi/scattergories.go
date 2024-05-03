@@ -34,7 +34,7 @@ func sendEvent(room *Room, envent string) {
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, []byte(data))
 		if err != nil {
-			log.Println("Error writing message:", err)
+			log.Println("Error writing message SEND EVENT:", err)
 			conn.Close()
 			delete(room.Connections, conn)
 		}
@@ -60,7 +60,7 @@ func sendScoreForResults(room *Room, lettre string, tabAnswer [][]string) {
 	for conn := range room.Connections {
 		err := conn.WriteMessage(websocket.TextMessage, data)
 		if err != nil {
-			log.Println("Error writing message:", err)
+			log.Println("Error writing message SENND SCOREFORRESULT:", err)
 			conn.Close()
 			delete(room.Connections, conn)
 		}
@@ -68,7 +68,10 @@ func sendScoreForResults(room *Room, lettre string, tabAnswer [][]string) {
 
 }
 
-func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
+func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB, tabopinion [][][]string) {
+	// [[azeazeazeeeeeeeeeeee dhgvazd dhazbdhaz] [Sunt et commodo sed duhzavduazd dhavdza]]
+	// [[[azeazeazeeeeeeeeeeee 0 0] [Sunt et commodo sed 1 1]],[[azeazeazeeeeeeeeeeee 1 1] [Sunt et commodo sed 0 0]]]
+
 	fmt.Println("tab", tabAnswer)
 	nbCategories := len(tabAnswer[0]) - 1
 	unique := true
@@ -88,10 +91,20 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
 							unique = false
 						}
 					}
-					if unique {
-						score += 2
+					moy := 0.0
+					for j := 0; j < len(tabopinion); j++ {
+						sc, _ := strconv.Atoi(tabopinion[j][i][y])
+						moy += float64(sc)
+					}
+					moy = moy / float64(len(tabopinion))
+					if moy > 0.5 {
+						if unique {
+							score += 2
+						} else {
+							score += 1
+						}
 					} else {
-						score += 1
+						score += 0
 					}
 				} else {
 					score += 0
@@ -129,7 +142,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 		return
 	}
 	fmt.Println("----------------------------GAME----------------------------")
-	defer conn.Close()
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()
@@ -142,9 +154,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 	var answer []string
 	var lettre string
 	var tabAnswer [][]string
-	var tabNul [][]string
 	var tabOpinion [][][]string
-	var tabAvis [][]string
 	cookie, err := r.Cookie("auth_token")
 	if err != nil {
 		fmt.Println("Erreur lors de la récupération du cookie :", err)
@@ -166,10 +176,12 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 			return userScores[i][1] < userScores[j][1]
 		})
 
-		tabAnswer = tabNul
+		tabAnswer = [][]string{}
+		tabOpinion = [][][]string{}
 
 		//init round time+lettre
 		stop := make(chan struct{})
+		time.Sleep(2 * time.Second)
 		if userID == iDCreatorOfRoom {
 			sendScores(room, userScores)
 			lettre = sendRandomLetter(room)
@@ -189,7 +201,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 			if err != nil {
 				fmt.Println("Erreur lors de la conversion des données:", err)
 			}
-			dataGame2, _ := parseEventData2(mess)
 			if dataGame.Event == "end" {
 				sendEvent(room, "fetchData")
 			} else if dataGame.Event == "catchBackData" {
@@ -201,30 +212,32 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 				if userID == iDCreatorOfRoom {
 					if len(tabAnswer) == len(usersIDs) {
 						sendScoreForResults(room, lettre, tabAnswer)
-						for i := 0; i < 5*len(tabAnswer); i++ {
+						for i := 0; i <= 5*len(tabAnswer); i++ {
 							time.Sleep(1 * time.Second)
 							sendTimer(room, (5*len(tabAnswer))-i)
 						}
 						sendEvent(room, "opinionBack")
 					}
 				}
-			} else if dataGame.Event == "endRound" {
-				tabAvis = append(tabAvis, dataGame.Data)
-				if len(tabAvis) == len(usersIDs) {
-					fmt.Println("tabAvis", tabAvis)
-					// updatScore()
-					break
-				}
-			} else if dataGame2.Event == "opinion" {
-				tabOpinion = append(tabOpinion, dataGame2.Data)
-				fmt.Print(dataGame2.Data)
-				if len(tabOpinion) == len(usersIDs) {
-					fmt.Println("tabOpinion", tabOpinion)
-					// addScore(tabAnswer, lettre, roomIDInt, db)
+			} else if dataGame.Event == "opinion" {
+				fmt.Println("Opignion send")
+				te := dataGame.Data2
+
+				sendOpinion(room, te)
+			} else if dataGame.Event == "allOpignionOnebyOne" {
+				te := dataGame.Data2
+				tabOpinion = append(tabOpinion, te)
+				if userID == iDCreatorOfRoom {
+					fmt.Println("data2", dataGame.Data2)
+					if len(tabOpinion) == len(usersIDs) {
+						fmt.Println("tabOpinion", tabOpinion)
+						addScore(tabAnswer, lettre, roomIDInt, db, tabOpinion)
+						break
+					}
 				}
 			}
-
 		}
-
+		fmt.Println("---------------------------------DEB DU TOUR---------------------------------")
 	}
+
 }

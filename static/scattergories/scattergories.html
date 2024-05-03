@@ -70,11 +70,21 @@
           } else {
             console.error("WebSocket is not open.");
           }
+        } else if (data.event == "opinionForSend"){
+          const dataToSend = {
+            Event: "allOpignionOnebyOne",
+            Data2: data.opi,
+          };
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+          }
         } else if (data.event == "resultsData") {
           game.style.display = "none";
           result.style.display = "block";
           var scores = data.scores;
-        
+          var nameActu =""
           while (result.firstChild) {
             result.removeChild(result.firstChild);
           }
@@ -87,7 +97,7 @@
               if (i != 0 ){
                 const checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
-                checkbox.id = "checkbox_" + element;
+                checkbox.id = "checkbox_" + nameActu;
                 const label = document.createElement("label");
                 label.setAttribute("for", "checkbox_" + element);
                 label.textContent = "OUI";
@@ -97,6 +107,7 @@
                 div.appendChild(label);
               }else{
                 p.textContent = element;
+                nameActu = element;
                 div.appendChild(p);
                 div.classList.add("name");
               }
@@ -110,6 +121,7 @@
           var dataToSend = {
             Event: "opinion",
             Data: [],
+            Data2: [],
           };  
           user.forEach(function (i) {
             var data = [];
@@ -117,11 +129,10 @@
             inputs.forEach(function (input) {
               if (input.id.includes(data[0])){
                 data.push(input.checked?"1":"0");
-              }
-            });
-            dataToSend.Data.push(data);
+            }});
+            dataToSend.Data2.push(data);
           });
-          console.log("envoie", dataToSend.Data);
+          console.log("envoie", dataToSend.Data2);
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(dataToSend));
           } else {
@@ -147,6 +158,7 @@
         const dataToSend = {
           Event: "catchBackData",
           Data: [],
+          Data2: [],
         };
         dataToSend.Data.push(userName);
         var inputs = document.querySelectorAll('input[type="text"]');
@@ -176,6 +188,7 @@
         const dataToSend = {
           Event: "end",
           Data: [],
+          Data2: [],
         };
         if (good) {
           if (ws.readyState === WebSocket.OPEN) {
