@@ -64,9 +64,18 @@
 
           function startSending() {
             var inputText = document.getElementById('answer').value;
-            setInterval(function() {
-                socket.send(inputText);
-            }, 1000);
+
+            const dataToSend = {
+              Event: "answer",
+              Answer: inputText,
+            };
+
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify(dataToSend));
+            } else {
+              console.error("WebSocket is not open.");
+            }
+
         }
 
           function checkAnswer(title) {

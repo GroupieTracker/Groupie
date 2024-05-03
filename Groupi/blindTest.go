@@ -30,6 +30,7 @@ var timerDataLock sync.Mutex
 var userName string
 var trackTitle string
 var playerInRoom []string
+var inputAnswer string
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -259,12 +260,19 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(playerInRoom)
 
 	for {
-		_, p, err := conn.ReadMessage()
+		_, mess, err := conn.ReadMessage()
 		if err != nil {
-			log.Println(err)
+			log.Println("Error reading message:", err)
+			mutex.Lock()
+			delete(room.Connections, conn)
+			mutex.Unlock()
 			return
 		}
-		log.Printf("Message reçu : %s\n", p)
+		dataGame, err := parseEventData(mess)
+
+		if dataGame.Event == "answer" {
+			inputAnswer == dataGame.answer
+		}
 	}
 
 	mutex.Lock()
