@@ -138,6 +138,17 @@
           } else {
             console.error("WebSocket is not open.");
           }
+        }else if (data.event == "endNow"){
+          const dataToSend = {
+          Event: "endTroun",
+          Data: [],
+          Data2: [],
+        };
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+          }
         }
       };
 

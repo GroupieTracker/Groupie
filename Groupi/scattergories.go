@@ -15,14 +15,39 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func sendEvent(room *Room, envent string) {
-	stop := make(chan struct{})
-	go stopTimer(stop)
+func sendEndBut(room *Room) {
+	tabEnd := struct {
+		Event string `json:"event"`
+	}{
+		Event: "endNow",
+	}
+	data, err := json.Marshal(tabEnd)
+	if err != nil {
+		fmt.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			log.Println("Error writing message SEND ENDBUT:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+
+}
+func sendEvent(room *Room, eve string) {
+	if eve == "fetchData" {
+		stop := make(chan struct{})
+		go stopTimer(stop)
+	}
 	tabCatchData := struct {
 		Event string `json:"event"`
 		R     int    `json:"r"`
 	}{
-		Event: envent,
+		Event: eve,
 		R:     -1,
 	}
 	data, err := json.Marshal(tabCatchData)
@@ -69,8 +94,6 @@ func sendScoreForResults(room *Room, lettre string, tabAnswer [][]string) {
 }
 
 func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB, tabopinion [][][]string) {
-	// [[azeazeazeeeeeeeeeeee dhgvazd dhazbdhaz] [Sunt et commodo sed duhzavduazd dhavdza]]
-	// [[[azeazeazeeeeeeeeeeee 0 0] [Sunt et commodo sed 1 1]],[[azeazeazeeeeeeeeeeee 1 1] [Sunt et commodo sed 0 0]]]
 
 	fmt.Println("tab", tabAnswer)
 	nbCategories := len(tabAnswer[0]) - 1
@@ -202,7 +225,8 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 				fmt.Println("Erreur lors de la conversion des données:", err)
 			}
 			if dataGame.Event == "end" {
-				sendEvent(room, "fetchData")
+				sendEndBut(room)
+
 			} else if dataGame.Event == "catchBackData" {
 				answer = dataGame.Data
 				sendData(room, answer)
@@ -235,6 +259,8 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 						break
 					}
 				}
+			} else if dataGame.Event == "endTroun" {
+				sendEvent(room, "fetchData")
 			}
 		}
 		fmt.Println("---------------------------------DEB DU TOUR---------------------------------")

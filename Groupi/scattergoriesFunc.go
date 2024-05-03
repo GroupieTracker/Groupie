@@ -42,7 +42,7 @@ func bouclTimer(room *Room, timeForRound int, stop <-chan struct{}) {
 		default:
 			sendTimer(room, timeactu)
 			timeactu = timeactu - 1
-			if timeactu <= 0 {
+			if timeactu <= -1 {
 				sendEvent(room, "fetchData")
 				return
 			}
