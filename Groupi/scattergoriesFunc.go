@@ -16,13 +16,28 @@ type BackData struct {
 	Data  []string `json:"data"`
 }
 
+type BackData2 struct {
+	Event string     `json:"event"`
+	Data  [][]string `json:"data"`
+}
+
 func parseEventData(data []byte) (*BackData, error) {
-	var event BackData
-	err := json.Unmarshal(data, &event)
-	if err != nil {
-		return nil, err
+	var event1 BackData
+	err := json.Unmarshal(data, &event1)
+	if err == nil {
+		return &event1, nil
 	}
-	return &event, nil
+
+	return nil, fmt.Errorf("failed to parse data into BackData or BackData2")
+}
+
+func parseEventData2(data []byte) (*BackData2, error) {
+	var event2 BackData2
+	err := json.Unmarshal(data, &event2)
+	if err == nil {
+		return &event2, nil
+	}
+	return nil, fmt.Errorf("failed to parse data into BackData or BackData2")
 }
 
 func getRandomLetter() string {
@@ -31,6 +46,7 @@ func getRandomLetter() string {
 	return letters[randomIndex]
 }
 func bouclTimer(room *Room, timeForRound int, stop <-chan struct{}) {
+
 	timeactu := timeForRound
 	for {
 		select {
@@ -40,7 +56,7 @@ func bouclTimer(room *Room, timeForRound int, stop <-chan struct{}) {
 			sendTimer(room, timeactu)
 			timeactu = timeactu - 1
 			if timeactu <= 0 {
-				endStart(room)
+				sendEvent(room, "fetchData")
 				return
 			}
 			time.Sleep(1 * time.Second)

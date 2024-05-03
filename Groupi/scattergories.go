@@ -9,17 +9,20 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func endStart(room *Room) {
+func sendEvent(room *Room, envent string) {
+	stop := make(chan struct{})
+	go stopTimer(stop)
 	tabCatchData := struct {
 		Event string `json:"event"`
 		R     int    `json:"r"`
 	}{
-		Event: "fetchData",
+		Event: envent,
 		R:     -1,
 	}
 	data, err := json.Marshal(tabCatchData)
@@ -39,9 +42,35 @@ func endStart(room *Room) {
 
 }
 
+func sendScoreForResults(room *Room, lettre string, tabAnswer [][]string) {
+	tabScores := struct {
+		Event  string     `json:"event"`
+		Scores [][]string `json:"scores"`
+	}{
+		Event:  "resultsData",
+		Scores: tabAnswer,
+	}
+	data, err := json.Marshal(tabScores)
+	if err != nil {
+		fmt.Println("Erreur de marshalling JSON:", err)
+		return
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for conn := range room.Connections {
+		err := conn.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			log.Println("Error writing message:", err)
+			conn.Close()
+			delete(room.Connections, conn)
+		}
+	}
+
+}
+
 func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
 	fmt.Println("tab", tabAnswer)
-	nbCategories := 5
+	nbCategories := len(tabAnswer[0]) - 1
 	unique := true
 	lettreMin := strings.ToLower(lettre)
 	lettreMaj := strings.ToUpper(lettre)
@@ -78,7 +107,7 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB) {
 	}
 }
 
-func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int) {
+func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, round int) {
 	var err error
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
@@ -114,6 +143,8 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 	var lettre string
 	var tabAnswer [][]string
 	var tabNul [][]string
+	var tabOpinion [][][]string
+	var tabAvis [][]string
 	cookie, err := r.Cookie("auth_token")
 	if err != nil {
 		fmt.Println("Erreur lors de la récupération du cookie :", err)
@@ -142,7 +173,7 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 		if userID == iDCreatorOfRoom {
 			sendScores(room, userScores)
 			lettre = sendRandomLetter(room)
-			go bouclTimer(room, time, stop)
+			go bouclTimer(room, timeForRound, stop)
 		}
 		//read message
 		for {
@@ -156,29 +187,44 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, time int, round int
 			}
 			dataGame, err := parseEventData(mess)
 			if err != nil {
-
 				fmt.Println("Erreur lors de la conversion des données:", err)
-				return
 			}
-			fmt.Println("donne.data : ", dataGame.Data)
+			dataGame2, _ := parseEventData2(mess)
 			if dataGame.Event == "end" {
-				stopTimer(stop)
-				endStart(room)
+				sendEvent(room, "fetchData")
 			} else if dataGame.Event == "catchBackData" {
 				answer = dataGame.Data
 				sendData(room, answer)
 			} else if dataGame.Event == "allDataOnebyOne" {
+				answer = dataGame.Data
+				tabAnswer = append(tabAnswer, answer)
 				if userID == iDCreatorOfRoom {
-					answer = dataGame.Data
-					tabAnswer = append(tabAnswer, answer)
 					if len(tabAnswer) == len(usersIDs) {
-						addScore(tabAnswer, lettre, roomIDInt, db)
-						break
+						sendScoreForResults(room, lettre, tabAnswer)
+						for i := 0; i < 5*len(tabAnswer); i++ {
+							time.Sleep(1 * time.Second)
+							sendTimer(room, (5*len(tabAnswer))-i)
+						}
+						sendEvent(room, "opinionBack")
 					}
 				}
+			} else if dataGame.Event == "endRound" {
+				tabAvis = append(tabAvis, dataGame.Data)
+				if len(tabAvis) == len(usersIDs) {
+					fmt.Println("tabAvis", tabAvis)
+					// updatScore()
+					break
+				}
+			} else if dataGame2.Event == "opinion" {
+				tabOpinion = append(tabOpinion, dataGame2.Data)
+				fmt.Print(dataGame2.Data)
+				if len(tabOpinion) == len(usersIDs) {
+					fmt.Println("tabOpinion", tabOpinion)
+					// addScore(tabAnswer, lettre, roomIDInt, db)
+				}
 			}
+
 		}
 
 	}
-
 }
