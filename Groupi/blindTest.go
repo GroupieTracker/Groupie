@@ -34,6 +34,9 @@ var playerInRoom []string
 var inputAnswer string
 var playersInRoomStruct []Player
 var conWin bool = false
+var myTime int
+var timerRunning bool
+var timerMutex sync.Mutex
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -83,20 +86,17 @@ func sendMusic(room *Room, musicURL string) {
 		err := conn.WriteMessage(websocket.TextMessage, jsonData)
 		if err != nil {
 			log.Println("Error writing message:", err)
-			//conn.Close()
 			delete(room.Connections, conn)
 		}
 	}
 }
 
 func addPlayer(username string) {
-	// Vérifier si le joueur existe déjà
 	for _, player := range playersInRoomStruct {
 		if player.Pseudo == username {
 			return
 		}
 	}
-	// Le joueur n'existe pas, ajoutons-le
 	newPlayer := Player{Pseudo: username, Score: 0, Status: true}
 	playersInRoomStruct = append(playersInRoomStruct, newPlayer)
 }
@@ -145,12 +145,15 @@ func bouclTimerBT(room *Room) {
 	fmt.Println(len(room.Connections))
 	timeForRound := 10
 	for {
+		myTime = timeForRound
 		sendTimerBT(room, timeForRound)
 		timeForRound = timeForRound - 1
 		time.Sleep(1 * time.Second)
 		if timeForRound < 0 {
-			for _, player := range playersInRoomStruct {
-				player.Status = true
+			for i, _ := range playersInRoomStruct {
+				playersInRoomStruct[i].Status = true
+				fmt.Println("--------------------")
+				break
 			}
 			musicLock.Lock()
 			SpotifyMusic(room)
@@ -162,6 +165,7 @@ func bouclTimerBT(room *Room) {
 }
 
 func sendTimerBT(room *Room, time int) {
+	fmt.Println(playersInRoomStruct)
 	var title string
 	if Track != "" {
 		title = trackTitle
@@ -190,7 +194,6 @@ func sendTimerBT(room *Room, time int) {
 		err := conn.WriteJSON(tabScore)
 		if err != nil {
 			log.Println("Error writing message:", err)
-			//conn.Close()
 			delete(room.Connections, conn)
 		}
 	}
@@ -269,11 +272,19 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	room.Connections[conn] = true
 	mutex.Unlock()
 
-	if len(room.Connections) <= 1 {
-		go bouclTimerBT(room)
+	timerMutex.Lock()
+	if !timerRunning {
+		go func() {
+			timerRunning = true
+			bouclTimerBT(room)
+			timerRunning = false
+		}()
 	}
+	timerMutex.Unlock()
 
 	fmt.Println(playerInRoom)
+
+	SpotifyMusic(room)
 
 	for {
 		_, mess, err := conn.ReadMessage()
@@ -301,11 +312,11 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("ouais ouais")
 			fmt.Println("la réponse de:", dataGame.Username, " est:", dataGame.Answer)
 			inputAnswer = dataGame.Answer
-			if inputAnswer == trackTitle {
+			if strings.ToLower(inputAnswer) == strings.ToLower(trackTitle) {
 				for _, player := range playersInRoomStruct {
 					fmt.Println(player.Status)
 					if player.Status == true && player.Pseudo == dataGame.Username {
-						addScoreStruct(dataGame.Username, 5)
+						addScoreStruct(dataGame.Username, myTime)
 					}
 					if player.Score == 100 {
 						fmt.Println("le Gagnant est:", player.Pseudo)
@@ -324,12 +335,4 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request) {
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()
-
-	// for {
-	//     _, _, err := conn.ReadMessage()
-	//     if err != nil {
-	//         // Gérer l'erreur ou arrêter la boucle
-	//         break
-	//     }
-	// }
 }

@@ -15,12 +15,12 @@
       }
   </style>
 
-    <iframe id="spotifyIframe" class="spotifyIframe" src="https://open.spotify.com/embed/track/53EgqZOqiGrnpCCX9Uj2Qw?start=35" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-    <style>
+    <iframe id="spotifyIframe" class="spotifyIframe" src="https://open.spotify.com/embed/track/4PWc65kJf7tKzgINh7rQmK#0:15" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    <!-- <style>
         .spotifyIframe {
             filter:blur(10px)
         }
-    </style>
+    </style> -->
     <div id="timer" class="timer">Timer</div>
     <div id="title" class="title">title</div>
     <div id="username" class="score">username</div>
@@ -30,7 +30,7 @@
     <button onclick="startSending()">Start Sending</button>
 
 
-    <h1>Liste des joueurs</h1>
+    <h1>Scoreboard :</h1>
     <ul id="players-list">
     </ul>
         
@@ -55,10 +55,7 @@
               }
 
 
-            if (data.event == "fetchData") {
-              collectAndSendValues();
-              console.log("ouais ça passe")
-            } else if (data.event == "timer") {
+              if (data.event == "timer") {
               var timer = document.getElementById("timer");
               timer.textContent = data.time;
               var title = document.getElementById("title");
@@ -129,19 +126,6 @@
               answer: answerValue,
             };
 
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify(dataToSend));
-            } else {
-              console.error("WebSocket is not open.");
-            }
-          }
-
-          function sendAnswer(answer) {
-            const dataToSend = {
-              Event: "answer",
-              Answer: answer,
-              Username: "feur"
-            };
             if (ws.readyState === WebSocket.OPEN) {
               ws.send(JSON.stringify(dataToSend));
             } else {
