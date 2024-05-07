@@ -15,20 +15,27 @@
       }
   </style>
 
-    <iframe id="spotifyIframe" class="spotifyIframe" src="https://open.spotify.com/embed/track/53EgqZOqiGrnpCCX9Uj2Qw?start=35" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-    <style>
+    <iframe id="spotifyIframe" class="spotifyIframe" src="https://open.spotify.com/embed/track/4PWc65kJf7tKzgINh7rQmK#0:15" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    <!-- <style>
         .spotifyIframe {
             filter:blur(10px)
         }
-    </style>
+    </style> -->
     <div id="timer" class="timer">Timer</div>
     <div id="title" class="title">title</div>
-    <div id="score" class="score">score</div>
+    <div id="username" class="score">username</div>
 
 
     <input id="answer" type="text">
+    <button onclick="startSending()">Start Sending</button>
+
+
+    <h1>Scoreboard :</h1>
+    <ul id="players-list">
+    </ul>
         
     <script>
+          var usernameID
           var params = new URLSearchParams(window.location.search);
           var roomID = params.get("room");
           var ws = new WebSocket("ws://10.70.5.231:8080/BlindTest/webs");
@@ -38,15 +45,29 @@
             console.log(event)
             var data = JSON.parse(event.data);
             console.log(data);
-            if (data.event == "fetchData") {
-              collectAndSendValues();
-              console.log("ouais ça passe")
-            } else if (data.event == "timer") {
+            var authToken = document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/, "$1");
+
+            if (authToken) {
+              usernameID = authToken
+                 console.log("La valeur du cookie auth_token est :", authToken);
+              } else {
+                 console.log("Le cookie auth_token n'existe pas ou est vide.");
+              }
+
+
+              if (data.event == "timer") {
               var timer = document.getElementById("timer");
               timer.textContent = data.time;
               var title = document.getElementById("title");
               title.textContent = "Titre de la piste : " + data.title;
+              var username = document.getElementById("username");
+              username.textContent = data.username
               checkAnswer(data.title);
+              displayPlayers(data.players);
+              console.log(data.players)
+              if (data.wincond == true) {
+                window.location.href = "http://10.70.5.231:8080/ListBlindtest/winner";
+              }
             } else if (data.event == "music") {
               var spotifyIframe = document.getElementById("spotifyIframe");
               spotifyIframe.src = data.music;
@@ -59,16 +80,46 @@
             }
           };
 
+          function startSending() {
+    var authToken = document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/, "$1");
+
+    if (authToken) {
+        console.log("La valeur du cookie auth_token est :", authToken);
+    } else {
+        console.log("Le cookie auth_token n'existe pas ou est vide.");
+        return;
+    }
+
+    var inputText = document.getElementById('answer').value;
+    var usernameID = document.getElementById('username').value;
+    console.log("answer:", inputText, "       username:", authToken)
+            
+    const dataToSend = {
+        Event: "answer",
+        Answer: inputText,
+        Username: authToken
+    };
+
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(dataToSend));
+    } else {
+        console.error("WebSocket is not open.");
+    }
+}
 
           function checkAnswer(title) {
             var answerInput = document.getElementById('answer');
             var answerValue = answerInput.value.toLowerCase();
+            var spotifyIframe = document.getElementById('spotifyIframe');
             if (title.toLowerCase() === answerValue) {
               answerInput.classList.add('correct');
+              spotifyIframe.style.filter = 'none';
             } else {
               answerInput.classList.remove('correct');
+              spotifyIframe.style.filter = 'blur(10px)';
             }
           }
+
 
           function collectAndSendValues() {
             var answerInput = document.getElementById('answer');
@@ -86,43 +137,15 @@
             }
           }
 
-          function sendAnswer(answer) {
-            const dataToSend = {
-              Event: "answer",
-              Answer: answer
-            };
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify(dataToSend));
-            } else {
-              console.error("WebSocket is not open.");
-            }
-          }
-
-
-          function end() {
-            var inputs = document.querySelectorAll('input[type="text"]');
-            var lettre = document.getElementById("lettre");
-            var good = true;
-            inputs.forEach(function (input) {
-              if (
-                input.value.charAt(0).toLowerCase() !==
-                lettre.textContent.toLowerCase()
-              ) {
-                good = false;
-              }
+          function displayPlayers(players) {
+            const playersList = document.getElementById("players-list");
+            playersList.innerHTML = ""; 
+            players.forEach(function(player) {
+                const listItem = document.createElement("li");
+                listItem.textContent = `${player.Pseudo}: ${player.Score}`;
+                playersList.appendChild(listItem);
             });
-            const dataToSend = {
-              Event: "end",
-              Data: [],
-            };
-            if (good) {
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(dataToSend));
-              } else {
-                console.error("WebSocket is not open.");
-              }
-            }
-          }
+        }
       </script>
 </body>
 </html>
