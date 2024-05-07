@@ -31,34 +31,39 @@ func WsWaitingRoom(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error upgrading to WebSocket: l 141", err)
 		return
 	}
-	fmt.Println("----------------------------WATTING-ROOM----------------------------")
 	defer conn.Close()
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()
 	iDCreatorOfRoom, err := GetRoomCreatorID(db, roomID)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket: l 151", err)
+		log.Println("Error upgrading to WebSocket: ", err)
 		return
 	}
-	userNameOfCreator, _ := GetUsernameByID(db, iDCreatorOfRoom)
-	roomIDInt, _ := strconv.Atoi(roomID)
+	userNameOfCreator, err := GetUsernameByID(db, iDCreatorOfRoom)
+	if err != nil {
+		log.Println("Error GetUsernameByID:", err)
+		return
+	}
+	roomIDInt, err := strconv.Atoi(roomID)
+	if err != nil {
+		log.Println("Error strconv: ", err)
+		return
+	}
 	maxPlayer, err := GetMaxPlayersForRoom(db, roomIDInt)
 	if err != nil {
 		fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
 		return
 	}
-	cookie, err := r.Cookie("auth_token")
 	if err != nil {
 		fmt.Println("Erreur lors de la récupération du cookie :", err)
 		return
 	}
-
-	fmt.Println("Valeur du cookie:", cookie.Value)
-	// userID, _ := GetUserIDByUsername(db, cookie.Value)
-
 	for {
-		usersIDs, _ := GetUsersInRoom(db, roomID)
+		usersIDs, err := GetUsersInRoom(db, roomID)
+		if err != nil {
+			log.Println("Error GetUsersInRoom:", err)
+		}
 		nbPlayer := len(usersIDs)
 		sendWaitingRoom(room, nbPlayer, maxPlayer, userNameOfCreator)
 		_, p, err := conn.ReadMessage()
@@ -71,7 +76,6 @@ func WsWaitingRoom(w http.ResponseWriter, r *http.Request) {
 		}
 
 		donnee, err := parseEventData(p)
-		fmt.Println(donnee)
 		if err != nil {
 			fmt.Println("Erreur lors de la conversion des données:", err)
 			return
@@ -86,9 +90,12 @@ func WsWaitingRoom(w http.ResponseWriter, r *http.Request) {
 				log.Fatal("Error opening database:", err)
 			}
 			defer db.Close()
-			fmt.Println("newPLayer : ", donnee.Data[0])
-			id, _ := GetUserIDByUsername(db, donnee.Data[0])
-			err := AddRoomUser(db, roomIDInt, id)
+			id, err := GetUserIDByUsername(db, donnee.Data[0])
+			if err != nil {
+				log.Println("Error GetUserIDByUsername:", err)
+				return
+			}
+			err = AddRoomUser(db, roomIDInt, id)
 			if err != nil {
 				log.Println("Error reading message:", err)
 			}

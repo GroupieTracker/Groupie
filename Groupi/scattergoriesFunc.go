@@ -317,8 +317,6 @@ func sendScoreForResults(room *Room, lettre string, tabAnswer [][]string) {
 }
 
 func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB, tabopinion [][][]string) {
-
-	fmt.Println("tab", tabAnswer)
 	nbCategories := len(tabAnswer[0]) - 1
 	unique := true
 	lettreMin := strings.ToLower(lettre)
@@ -339,7 +337,11 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB, ta
 					}
 					moy := 0.0
 					for j := 0; j < len(tabopinion); j++ {
-						sc, _ := strconv.Atoi(tabopinion[j][i][y])
+						sc, err := strconv.Atoi(tabopinion[j][i][y])
+						if err != nil {
+							fmt.Println("Erreur lors de la conversion des données:", err)
+							return
+						}
 						moy += float64(sc)
 					}
 					moy = moy / float64(len(tabopinion))
@@ -357,8 +359,12 @@ func addScore(tabAnswer [][]string, lettre string, roomIDInt int, db *sql.DB, ta
 				}
 			}
 		}
-		idactu, _ := GetUserIDByUsername(db, tabAnswer[i][0])
-		err := UpdateRoomUserScore(db, roomIDInt, idactu, score)
+		idactu, err := GetUserIDByUsername(db, tabAnswer[i][0])
+		if err != nil {
+			log.Println("Error GetUserIDByUsername: ", err)
+			return
+		}
+		err = UpdateRoomUserScore(db, roomIDInt, idactu, score)
 		if err != nil {
 			fmt.Println("Erreur lors de la conversion des données:", err)
 			return

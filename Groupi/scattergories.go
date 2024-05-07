@@ -31,19 +31,22 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket: l 141", err)
+		log.Println("Error upgrading to WebSocket: ", err)
 		return
 	}
-	fmt.Println("----------------------------GAME----------------------------")
 	mutex.Lock()
 	room.Connections[conn] = true
 	mutex.Unlock()
 	iDCreatorOfRoom, err := GetRoomCreatorID(db, roomID)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket: l 151", err)
+		log.Println("Error upgrading to WebSocket:", err)
 		return
 	}
-	roomIDInt, _ := strconv.Atoi(roomID)
+	roomIDInt, err := strconv.Atoi(roomID)
+	if err != nil {
+		log.Println("Error strconv: ", err)
+		return
+	}
 	var answer []string
 	var lettre string
 	var tabAnswer [][]string
@@ -53,13 +56,17 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 		fmt.Println("Erreur lors de la récupération du cookie :", err)
 		return
 	}
-	fmt.Println("Valeur du cookie:", cookie.Value)
-	userID, _ := GetUserIDByUsername(db, cookie.Value)
-
-	fmt.Println("----------------------------START----------------------------")
+	userID, err := GetUserIDByUsername(db, cookie.Value)
+	if err != nil {
+		log.Println("Error GetUserIDByUsername: ", err)
+		return
+	}
 	for i := 0; i < round; i++ {
-		fmt.Println("---------------------------------DEB DU TOUR---------------------------------")
-		usersIDs, _ := GetUsersInRoom(db, roomID)
+		usersIDs, err := GetUsersInRoom(db, roomID)
+		if err != nil {
+			log.Println("Error GetUsersInRoom: ", err)
+			return
+		}
 		userScores, err := GetUserScoresForRoom(db, usersIDs, roomIDInt)
 		if err != nil {
 			fmt.Println("Erreur lors de la get scores:", err)
@@ -111,17 +118,13 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 					}
 				}
 			} else if dataGame.Event == "opinion" {
-				fmt.Println("Opignion send")
 				te := dataGame.Data2
-
 				sendOpinion(room, te)
 			} else if dataGame.Event == "allOpignionOnebyOne" {
 				te := dataGame.Data2
 				tabOpinion = append(tabOpinion, te)
 				if userID == iDCreatorOfRoom {
-					fmt.Println("data2", dataGame.Data2)
 					if len(tabOpinion) == len(usersIDs) {
-						fmt.Println("tabOpinion", tabOpinion)
 						addScore(tabAnswer, lettre, roomIDInt, db, tabOpinion)
 						break
 					}
