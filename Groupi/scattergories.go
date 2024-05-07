@@ -66,13 +66,11 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 			return
 		}
 		sort.Slice(userScores, func(i, j int) bool {
-			return userScores[i][1] < userScores[j][1]
+			return userScores[i][1] > userScores[j][1]
 		})
 
 		tabAnswer = [][]string{}
 		tabOpinion = [][][]string{}
-
-		//init round time+lettre
 		stop := make(chan struct{})
 		time.Sleep(1 * time.Second)
 		if userID == iDCreatorOfRoom {
@@ -80,7 +78,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 			lettre = sendRandomLetter(room)
 			go bouclTimer(room, timeForRound, stop)
 		}
-		//read message
 		for {
 			_, mess, err := conn.ReadMessage()
 			if err != nil {
@@ -133,7 +130,6 @@ func WsScattergories(w http.ResponseWriter, r *http.Request, timeForRound int, r
 				sendEvent(room, "fetchData")
 			}
 		}
-		fmt.Println("---------------------------------DEB DU TOUR---------------------------------")
 	}
-
+	sendEvent(room, "goresult")
 }

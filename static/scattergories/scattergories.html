@@ -149,6 +149,8 @@
           } else {
             console.error("WebSocket is not open.");
           }
+        }else if (data.event == "goresult"){
+          window.location.href = "/Result?room=" + roomID;
         }
       };
 

@@ -6,7 +6,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -163,6 +165,27 @@ func GoListScattergories(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, tab)
 }
 
+func GoResult(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/result.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
+	defer db.Close()
+	queryParams := r.URL.Query()
+	roomIDStr := queryParams.Get("room")
+	id, _ := strconv.Atoi(roomIDStr)
+	userScoreTab, _ := Groupi.GetUserScoresForRoomID(db, id)
+	sort.Slice(userScoreTab, func(i, j int) bool {
+		return userScoreTab[i][1] > userScoreTab[j][1]
+	})
+
+	tmpl.Execute(w, userScoreTab)
+	time.Sleep(1 * time.Second)
+	Groupi.DeleteRoomData(db, id)
+}
+
 func main() {
 	var time int
 	var nbRound int
@@ -181,7 +204,7 @@ func main() {
 	http.HandleFunc("/LobGuessthesong", GoLobGuessthesong)
 	http.HandleFunc("/ListGuessthesong", GoListGuessthesong)
 	http.HandleFunc("/WaitingRoomForScattergories/webs", Groupi.WsWaitingRoom)
-
+	http.HandleFunc("/Result", GoResult)
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
 	http.HandleFunc("/ListLobOfScattergories", GoListScattergories)
 	http.HandleFunc("/logout", Logout)

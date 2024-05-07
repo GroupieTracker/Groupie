@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+</head>
+<body>
+    {{range $index, $value := .}}
+    <span class="">TOP : {{$index +1}}</span>
+        {{range .}}
+
+        <span class="">{{.}}</span>
+        {{end}}
+<br>
+    {{end}}
+
+    <a href="/home">
+        <button>Home</button>
+    </a>
+</body>
+</html>

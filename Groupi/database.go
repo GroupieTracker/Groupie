@@ -281,3 +281,50 @@ func GetRoomsByGameCategory(db *sql.DB, categoryName string) ([][]string, error)
 	}
 	return rooms, nil
 }
+
+func GetUserScoresForRoomID(db *sql.DB, roomID int) ([][]string, error) {
+	var userScores [][]string
+
+	query := `
+        SELECT u.pseudo, ru.score
+        FROM USER u
+        INNER JOIN ROOM_USERS ru ON u.id = ru.id_user
+        WHERE ru.id_room = ?`
+	rows, err := db.Query(query, roomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var username string
+		var score int
+		if err := rows.Scan(&username, &score); err != nil {
+			return nil, err
+		}
+		userScores = append(userScores, []string{username, strconv.Itoa(score)})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userScores, nil
+}
+
+func DeleteRoomData(db *sql.DB, roomID int) error {
+	_, err := db.Exec("DELETE FROM ROOM_USERS WHERE id_room = ?", roomID)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec("DELETE FROM ROOMS WHERE id = ?", roomID)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec("DELETE FROM GAMES WHERE id IN (SELECT id_game FROM ROOMS WHERE id = ?)", roomID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
