@@ -174,6 +174,14 @@ func GoListScattergories(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, tab)
 }
 
+func GoWattingForBlindTest(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./static/blindtest/waitingRoom.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
+}
 func GoResult(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./static/result.html")
 	if err != nil {
@@ -215,7 +223,9 @@ func main() {
 	http.HandleFunc("/ListBlindtest", GoListBlindtest)
 	http.HandleFunc("/LobGuessthesong", GoLobGuessthesong)
 	http.HandleFunc("/ListGuessthesong", GoListGuessthesong)
+	http.HandleFunc("/WaitingRoomForBlindTest", GoWattingForBlindTest)
 	http.HandleFunc("/WaitingRoomForScattergories/webs", Groupi.WsWaitingRoom)
+	http.HandleFunc("/WaitingRoomForBlindTest/webs", Groupi.WsWaitingRoomBlindtest)
 	http.HandleFunc("/Result", GoResult)
 	http.HandleFunc("/WaitingRoomForBlintest/webs", Groupi.WsWaitingRoomBlindtest)
 
@@ -343,7 +353,7 @@ func main() {
 		}
 		roomID, _ := Groupi.CreateRoomAndGetID(db, newRoom)
 		id := strconv.Itoa(roomID)
-		http.Redirect(w, r, "/BlindTest?room="+id, http.StatusSeeOther)
+		http.Redirect(w, r, "/WaitingRoomForBlindTest?room="+id, http.StatusSeeOther)
 
 	})
 

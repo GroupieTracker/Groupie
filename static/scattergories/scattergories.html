@@ -21,10 +21,10 @@
     <section class="result"></section>
     <script>
       var params = new URLSearchParams(window.location.search);
-      var roomID = params.get("room");
       const scor = document.querySelector(".scor");
       const result = document.querySelector(".result");
       const game = document.querySelector(".game");
+      var roomID = params.get("room");
       var ws = new WebSocket(
         // "ws://localhost:8080/Scattergories/webs?room=" + roomID
         "ws://10.70.6.24:8080/Scattergories/webs?room=" + roomID

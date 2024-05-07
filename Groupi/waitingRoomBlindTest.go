@@ -28,7 +28,7 @@ func WsWaitingRoomBlindtest(w http.ResponseWriter, r *http.Request) {
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket: l 141", err)
+		log.Println("Error upgrading to WebSocket:", err)
 		return
 	}
 	fmt.Println("----------------------------WATTING-ROOM----------------------------")
@@ -38,7 +38,7 @@ func WsWaitingRoomBlindtest(w http.ResponseWriter, r *http.Request) {
 	mutex.Unlock()
 	iDCreatorOfRoom, err := GetRoomCreatorID(db, roomID)
 	if err != nil {
-		log.Println("Error upgrading to WebSocket: l 151", err)
+		log.Println("Error upgrading to WebSocket : ", err)
 		return
 	}
 	userNameOfCreator, _ := GetUsernameByID(db, iDCreatorOfRoom)
@@ -48,15 +48,6 @@ func WsWaitingRoomBlindtest(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Erreur lors de GetMaxPlayersForRoom:", err)
 		return
 	}
-	cookie, err := r.Cookie("auth_token")
-	if err != nil {
-		fmt.Println("Erreur lors de la récupération du cookie :", err)
-		return
-	}
-
-	fmt.Println("Valeur du cookie:", cookie.Value)
-	// userID, _ := GetUserIDByUsername(db, cookie.Value)
-
 	for {
 		usersIDs, _ := GetUsersInRoom(db, roomID)
 		nbPlayer := len(usersIDs)

@@ -329,3 +329,15 @@ func DeleteRoomData(db *sql.DB, roomID int) error {
 
 	return nil
 }
+
+func updatePlayerScores(db *sql.DB, players []Player, roomID int) error {
+	fmt.Println("Updating player scores RFTGYHUJIKOLPOIUYTRSDCVBYUIKOPVREPJGIEROJGIREOGJREGOERGJJJJJJJJJGIOGEIGJREIGJERIJGJERJRGJRJI : ", players[0].Score, players[0].Pseudo, roomID)
+	for _, player := range players {
+		_, err := db.Exec("UPDATE ROOM_USERS SET score = ? WHERE id_room = ? AND id_user = (SELECT id FROM USER WHERE pseudo = ?)", player.Score, roomID, player.Pseudo)
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Println(db.Exec("SELECT * FROM ROOM_USERS"))
+	return nil
+}

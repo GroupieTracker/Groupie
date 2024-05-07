@@ -2,6 +2,7 @@ package Groupi
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -228,10 +230,12 @@ func orderByScore(players []Player) {
 func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) {
 
 	roomID := r.URL.Query().Get("room")
-	if roomID == "" {
-		roomID = "blindTest"
+	fmt.Println(roomID)
+	roomIDInt, err := strconv.Atoi(roomID)
+	if err != nil {
+		log.Println("Error converting room ID to int:", err)
+		return
 	}
-
 	room, ok := rooms[roomID]
 	if !ok {
 		room = &Room{
@@ -305,7 +309,11 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 		fmt.Println(dataGame)
 
 		addPlayer(dataGame.Username)
-
+		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
+		if err != nil {
+			log.Fatal("Error opening database:", err)
+		}
+		defer db.Close()
 		if dataGame.Event == "answer" {
 			fmt.Println("ouais ouais")
 			fmt.Println("la réponse de:", dataGame.Username, " est:", dataGame.Answer)
@@ -315,6 +323,7 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 					fmt.Println(player.Status)
 					if player.Status == true && player.Pseudo == dataGame.Username {
 						addScoreStruct(dataGame.Username, myTime)
+						updatePlayerScores(db, playersInRoomStruct, roomIDInt)
 					}
 					if player.Score == 100 {
 						fmt.Println("le Gagnant est:", player.Pseudo)
