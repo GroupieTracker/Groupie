@@ -177,6 +177,7 @@ func main() {
 	http.HandleFunc("/LobGuessthesong", GoLobGuessthesong)
 	http.HandleFunc("/ListGuessthesong", GoListGuessthesong)
 	http.HandleFunc("/WaitingRoomForScattergories/webs", Groupi.WsWaitingRoom)
+	http.HandleFunc("/WaitingRoomForBlintest/webs", Groupi.WsWaitingRoomBlindtest)
 
 	http.HandleFunc("/LobScattergories", GoLobScattergories)
 	http.HandleFunc("/ListLobOfScattergories", GoListScattergories)
