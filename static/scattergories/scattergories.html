@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PETIT BAC</title>
+  </head>
+  <body>
+    <div id="timer">Timer</div>
+    <section class="game">
+      <div id="lettre">Lettre</div>
+      <div class="scor"></div>
+      <div class="game">
+        {{range .}}
+        <div class="categ">{{.}}</div>
+        <input type="text" />
+        {{end}}
+        <input type="button" value="Fini" onclick="end()" />
+      </div>
+    </section>
+    <section class="result"></section>
+    <script>
+      var params = new URLSearchParams(window.location.search);
+      const scor = document.querySelector(".scor");
+      const result = document.querySelector(".result");
+      const game = document.querySelector(".game");
+      var roomID = params.get("room");
+      var ws = new WebSocket(
+        // "ws://localhost:8080/Scattergories/webs?room=" + roomID
+        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/Scattergories/webs?room=" + roomID
+      );
+      const userName = getCookie("auth_token");
+      ws.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        console.log(data);
+        if (data.event == "fetchData") {
+          collectAndSendValues();
+        } else if (data.event == "timer") {
+          var timer = document.getElementById("timer");
+          timer.textContent = data.time;
+        } else if (data.event == "letter") {
+          game.style.display = "block";
+          result.style.display = "none";
+          var lettre = document.getElementById("lettre");
+          lettre.textContent = data.lettre;
+          var inputs = document.querySelectorAll('input[type="text"]');
+          inputs.forEach(function (input) {
+            input.value = "";
+          });
+        } else if (data.event == "scoresData") {
+          while (scor.firstChild) {
+            scor.removeChild(scor.firstChild);
+          }
+          var scores = data.scores;
+          scores.forEach((user) => {
+            const pseudo = document.createElement("div");
+            pseudo.textContent = user[0];
+            const scored = document.createElement("div");
+            scored.textContent = user[1];
+            scor.appendChild(pseudo);
+            scor.appendChild(scored);
+          });
+        } else if (data.event == "dataForSend") {
+          const dataToSend = {
+            Event: "allDataOnebyOne",
+            Data: data.data,
+          };
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+          }
+        } else if (data.event == "opinionForSend"){
+          const dataToSend = {
+            Event: "allOpignionOnebyOne",
+            Data2: data.opi,
+          };
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+          }
+        } else if (data.event == "resultsData") {
+          game.style.display = "none";
+          result.style.display = "block";
+          var scores = data.scores;
+          var nameActu =""
+          while (result.firstChild) {
+            result.removeChild(result.firstChild);
+          }
+          scores.forEach((e) => {
+            const user = document.createElement("div");
+            user.className = "user";
+            e.forEach((element , i) => {
+              const div = document.createElement("div");
+              const p = document.createElement("p");
+              if (i != 0 ){
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = "checkbox_" + nameActu;
+                const label = document.createElement("label");
+                label.setAttribute("for", "checkbox_" + element);
+                label.textContent = "OUI";
+                p.textContent = element + "             VALIDE ? ";
+                div.appendChild(p);
+                div.appendChild(checkbox);
+                div.appendChild(label);
+              }else{
+                p.textContent = element;
+                nameActu = element;
+                div.appendChild(p);
+                div.classList.add("name");
+              }
+              user.appendChild(div);
+            });
+            result.appendChild(user);
+          });
+        }else if (data.event == "opinionBack") {
+          var inputs = document.querySelectorAll('input[type="checkbox"]');
+          var user = document.querySelectorAll('.user');
+          var dataToSend = {
+            Event: "opinion",
+            Data: [],
+            Data2: [],
+          };  
+          user.forEach(function (i) {
+            var data = [];
+            data.push(i.querySelector('.name').textContent);
+            inputs.forEach(function (input) {
+              if (input.id.includes(data[0])){
+                data.push(input.checked?"1":"0");
+            }});
+            dataToSend.Data2.push(data);
+          });
+          console.log("envoie", dataToSend.Data2);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+          }
+        }else if (data.event == "endNow"){
+          const dataToSend = {
+          Event: "endTroun",
+          Data: [],
+          Data2: [],
+        };
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+          }
+        }else if (data.event == "goresult"){
+          window.location.href = "/Result?room=" + roomID;
+        }
+      };
+
+      function getCookie() {
+        var cookies = document.cookie.split("; ");
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].split("=");
+          var name = cookie[0].trim();
+          if (name === "auth_token") {
+            var value = cookie[1].replace(/^"|"$/g, "");
+            return value;
+          }
+        }
+        return null;
+      }
+
+      function collectAndSendValues() {
+        const dataToSend = {
+          Event: "catchBackData",
+          Data: [],
+          Data2: [],
+        };
+        dataToSend.Data.push(userName);
+        var inputs = document.querySelectorAll('input[type="text"]');
+        inputs.forEach(function (input) {
+          dataToSend.Data.push(input.value);
+        });
+        console.log("envoie", dataToSend.Data);
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(dataToSend));
+        } else {
+          console.error("WebSocket is not open.");
+        }
+      }
+
+      function end() {
+        var inputs = document.querySelectorAll('input[type="text"]');
+        var lettre = document.getElementById("lettre");
+        var good = true;
+        inputs.forEach(function (input) {
+          if (
+            input.value.charAt(0).toLowerCase() !==
+            lettre.textContent.toLowerCase()
+          ) {
+            good = false;
+          }
+        });
+        const dataToSend = {
+          Event: "end",
+          Data: [],
+          Data2: [],
+        };
+        if (good) {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(dataToSend));
+          } else {
+            console.error("WebSocket is not open.");
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

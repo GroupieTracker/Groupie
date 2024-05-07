@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un compte</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <img id="background-image">
+    <div class="container">
+        <h1>Créer un compte</h1>
+        <form action="/handle-register" method="post">
+            <label for="new_pseudo">Nom d'utilisateur :</label>
+            <input type="text" id="new_pseudo" name="new_pseudo" required>
+
+            <label for="new_email">Email :</label>
+            <input type="email" id="new_email" name="new_email" required>
+
+            <label for="new_password">Mot de Passe :</label>
+            <input type="password" id="new_password" name="new_password" required>
+
+            <input type="submit" value="Register">
+            <p class="message">Déjà un Compte <a href="login">Se connecter</a></p>
+
+            <br>
+            {{ if .Error }}
+                <p class="error">{{ .Error }}</p>
+            {{ end }}
+        </form>
+    </div>
+</body>
+</html>

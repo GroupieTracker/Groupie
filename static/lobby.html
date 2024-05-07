@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="icon" href="assets/pictures/logo-32x32.png" type="image/icon type">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const games = document.querySelectorAll('.game');
+            games.forEach(function(game) {
+                game.addEventListener('click', function() {
+                    const form = game.querySelector('form');
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <a href="/logout"><span class="material-symbols-outlined logout-icon">logout</span></a>
+    <div class="container-game">
+        <div class="game" id="blindtest">
+            <form action="/ListBlindtest" method="post">
+                <button class="hidden-button" type="submit">Jouer</button>
+            </form>
+        </div>
+        <div class="game" id="deaftest">
+            <form action="/ListGuessthesong" method="post">
+                <button class="hidden-button" type="submit">Jouer</button>
+            </form>
+        </div>
+        <div class="game" id="petit-bac">
+            <form action="/ListLobOfScattergories" method="post">
+                <button class="hidden-button" type="submit">Jouer</button>
+            </form>
+        </div>
+    </div>
+    <footer>
+        Copyright <a href="/team">Groupie Tracker</a>
+    </footer>
+</body>
+</html>

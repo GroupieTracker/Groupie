@@ -1,0 +1,26 @@
+{{define "result"}}
+<div class="container">
+    <div class="row">
+        <div class="">
+            <h1>Results</h1>
+            <table class="">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Player</th>
+                        <th>Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .}}
+                    <tr>
+                        <td>{{.Category}}</td>
+                        <td>{{.Player}}</td>
+                        <td>{{.Answer}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{{end}}

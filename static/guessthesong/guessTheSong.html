@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="/lobby" method="post">
+        <h1>home</h1>
+        <input type="submit">
+    </form>
+        <input type="text" id="messageInput" placeholder="Entrez votre message">
+        <button onclick="sendMessage()">Envoyer</button>
+        <h1>Guess th song</h1>
+        <ul id="messageList"></ul>
+    
+        <script>
+             var params = new URLSearchParams(window.location.search);
+      var roomID = params.get("room");
+      var ws = new WebSocket(
+        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/GuessTheSong/webs?room=" + roomID
+      );
+    
+            ws.onmessage = function(event) {
+                var messageList = document.getElementById("messageList");
+                var li = document.createElement("li");
+                li.textContent = event.data;
+                messageList.appendChild(li);
+            };
+    
+            function sendMessage() {
+                var messageInput = document.getElementById("messageInput"); 
+                var message = messageInput.value;
+                ws.send(message);
+                messageInput.value = "";
+            }
+        </script>
+    </body>
+    </html>
+    
