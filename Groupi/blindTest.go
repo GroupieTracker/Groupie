@@ -225,7 +225,7 @@ func orderByScore(players []Player) {
 	})
 }
 
-func WsBlindTest(w http.ResponseWriter, r *http.Request) {
+func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) {
 
 	roomID := r.URL.Query().Get("room")
 	if roomID == "" {

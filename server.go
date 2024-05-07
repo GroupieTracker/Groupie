@@ -197,7 +197,9 @@ func GoResult(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var time int
+	var timeForRoundBlindTest int
 	var nbRound int
+	var nbRoundBlindTest int
 	var username string
 	var category []string
 	db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
@@ -208,7 +210,6 @@ func main() {
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
-	http.HandleFunc("/BlindTest/webs", Groupi.WsBlindTest)
 	http.HandleFunc("/GuessTheSong/webs", Groupi.WsGuessTheSong)
 	http.HandleFunc("/LobBlindtest", GoLobBlindtest)
 	http.HandleFunc("/ListBlindtest", GoListBlindtest)
@@ -223,21 +224,15 @@ func main() {
 	http.HandleFunc("/logout", Logout)
 
 	http.HandleFunc("/handle-login", func(w http.ResponseWriter, r *http.Request) {
-		username = HandleLogin(w, r)
-
-		if username == "err" {
-			fmt.Println("err in login func")
-		}
-
+		HandleLogin(w, r)
 	})
 	http.HandleFunc("/handle-register", func(w http.ResponseWriter, r *http.Request) {
-		username = HandleRegister(w, r)
-		if username == "err" {
-			fmt.Println("err in register func")
-		}
-
+		HandleRegister(w, r)
 	})
 
+	http.HandleFunc("/BlindTest/webs", func(w http.ResponseWriter, r *http.Request) {
+		Groupi.WsBlindTest(w, r, timeForRoundBlindTest, nbRoundBlindTest)
+	})
 	http.HandleFunc("/BlindTest", func(w http.ResponseWriter, r *http.Request) {
 		GoBlindTest(w, r)
 	})
@@ -314,10 +309,17 @@ func main() {
 	})
 
 	http.HandleFunc("/RuleForBlindtest", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("auth_token")
+		if err != nil {
+			fmt.Println("Erreur lors de la récupération du cookie :", err)
+			return
+		}
+		username = cookie.Value
+
 		db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 		defer db.Close()
 		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
-		time = ti
+		timeForRoundBlindTest = ti
 		nbRound = nbRo
 		newGame := Groupi.Game{
 			Name: "blindtest",

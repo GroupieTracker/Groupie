@@ -19,7 +19,7 @@
              var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
       var ws = new WebSocket(
-        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/GuessTheSong/webs?room=" + roomID
+        "ws://10.70.6.24:8080/GuessTheSong/webs?room=" + roomID
       );
     
             ws.onmessage = function(event) {

@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
 	"net/http"
 	"regexp"
 	"time"
-	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -49,16 +49,16 @@ func Lobby(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/lobby.html")
 }
 
-func HandleRegister(w http.ResponseWriter, r *http.Request) string {
+func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-		return "err"
+
 	}
 
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return "err"
+
 	}
 	username := r.Form.Get("new_pseudo")
 	email := r.Form.Get("new_email")
@@ -72,7 +72,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return "err"
+
 		}
 		defer db.Close()
 
@@ -81,7 +81,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		err = row.Scan(&count)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return "err"
+
 		}
 
 		var count1 int
@@ -89,7 +89,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		err = row1.Scan(&count1)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return "err"
+
 		}
 
 		if count1 > 0 {
@@ -100,13 +100,13 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 			if err != nil {
 				http.Error(w, "MDP pas hashé", http.StatusInternalServerError)
-				return "err"
+
 			}
 
 			_, err = db.Exec("INSERT INTO USER (pseudo, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return "err"
+
 			}
 			fmt.Println(username)
 
@@ -124,7 +124,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) string {
 		}
 	}
 	registerError(w, userError)
-	return username
+
 }
 
 func registerError(w http.ResponseWriter, userError string) {
@@ -160,16 +160,16 @@ func containsSpecialChar(s string) bool {
 	return r.MatchString(s)
 }
 
-func HandleLogin(w http.ResponseWriter, r *http.Request) string {
+func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-		return "err"
+
 	}
 
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return "err"
+
 	}
 
 	usernameOrEmail := r.Form.Get("username")
@@ -178,7 +178,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 	db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return "err"
+
 	}
 	defer db.Close()
 
@@ -187,19 +187,19 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 	err = row.Scan(&storedPassword)
 	if err != nil {
 		loginError(w, "Nom d'utilisateur ou mot de passe incorrect")
-		return "err"
+
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
 	if err != nil {
 		loginError(w, "Nom d'utilisateur ou mot de passe incorrect")
-		return "err"
+
 	}
 
 	username, err := Groupi.GetUsernameByEmailOrUsername(db, usernameOrEmail)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return "err"
+
 	}
 	fmt.Println(username)
 	expiration := time.Now().Add(24 * time.Hour)
@@ -214,7 +214,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) string {
 
 	http.Redirect(w, r, "/lobby", http.StatusSeeOther)
 
-	return username
 }
 
 func isAuthenticated(r *http.Request) bool {
