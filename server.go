@@ -191,7 +191,9 @@ func main() {
 	var nbRound int
 	var username string
 	var category []string
-
+	db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
+	defer db.Close()
+	Groupi.ClearDatabase(db)
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/team", Team)
 	http.HandleFunc("/login", Login)
@@ -257,7 +259,6 @@ func main() {
 			fmt.Println("Erreur lors de la récupération du cookie :", err)
 			return
 		}
-		Groupi.ClearDatabase(db)
 		username = cookie.Value
 
 		defer db.Close()
