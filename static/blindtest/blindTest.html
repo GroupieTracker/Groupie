@@ -38,7 +38,7 @@
           var usernameID
           var params = new URLSearchParams(window.location.search);
           var roomID = params.get("room");
-          var ws = new WebSocket("ws://localhost:8080/BlindTest/webs");
+          var ws = new WebSocket("ws://10.70.5.231:8080/BlindTest/webs");
           ws.onopen = ()=>console.log("open ws")
           ws.onclose = ()=>console.log("close ws")
           ws.onmessage = function (event) {
@@ -110,12 +110,16 @@
           function checkAnswer(title) {
             var answerInput = document.getElementById('answer');
             var answerValue = answerInput.value.toLowerCase();
+            var spotifyIframe = document.getElementById('spotifyIframe');
             if (title.toLowerCase() === answerValue) {
               answerInput.classList.add('correct');
+              spotifyIframe.style.filter = 'none';
             } else {
               answerInput.classList.remove('correct');
+              spotifyIframe.style.filter = 'blur(10px)';
             }
           }
+
 
           function collectAndSendValues() {
             var answerInput = document.getElementById('answer');

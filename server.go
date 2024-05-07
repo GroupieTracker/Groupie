@@ -202,6 +202,10 @@ func main() {
 		GoBlindTest(w, r)
 	})
 
+	http.HandleFunc("/LobblindTest", func(w http.ResponseWriter, r *http.Request) {
+		GoLobBlindtest(w, r)
+	})
+
 	http.HandleFunc("ListBlindtest/winner", func(w http.ResponseWriter, r *http.Request) {
 		GoWinnerTest(w, r)
 	})

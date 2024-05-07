@@ -152,8 +152,6 @@ func bouclTimerBT(room *Room) {
 		if timeForRound < 0 {
 			for i, _ := range playersInRoomStruct {
 				playersInRoomStruct[i].Status = true
-				fmt.Println("--------------------")
-				break
 			}
 			musicLock.Lock()
 			SpotifyMusic(room)
