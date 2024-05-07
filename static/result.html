@@ -7,8 +7,8 @@
 </head>
 <body>
     {{range $index, $value := .}}
-    {{$indexPlusOne := $index | addOne}} 
-    <span class="">TOP : {{$indexPlusOne}} </span>
+
+    <span class="">TOP : {{$index}} </span>
         {{range .}}
 
         <span class="">{{.}}</span>
