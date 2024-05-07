@@ -14,6 +14,7 @@
     --secondary-color: #212122;
     --tertiary-color: #15f2bf;
     --text-color: #fff;
+    --text-color-grey: #555;
 }
 
 /* ALL */
@@ -32,6 +33,10 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+}
+
+#title-categories {
+    color: var(--text-color-grey);
 }
 
 /* Index Page */
@@ -356,7 +361,7 @@ h2 {
 
 label {
     font-weight: bold;
-    color: #555;
+    color: var(--text-color-grey);
 }
 
 input[type="text"] {
