@@ -77,6 +77,10 @@ func WsWaitingRoom(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if donnee.Event == "newPlayer" {
+			if nbPlayer >= maxPlayer {
+				http.Redirect(w, r, "/home", http.StatusSeeOther)
+				return
+			}
 			db, err = sql.Open("sqlite3", "./Groupi/BDD.db")
 			if err != nil {
 				log.Fatal("Error opening database:", err)

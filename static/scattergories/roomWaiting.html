@@ -11,10 +11,15 @@
       <span>Nb de player </span><span class="nbPlayer"></span><span> sur </span
       ><span class="maxPlayer"></span><span> max</span>
       <div class="wait"></div>
+      <span>Copier le code pour le partagé : </span> <input id="textToCopy" readonly />
     </section>
     <script>
+
+
       var params = new URLSearchParams(window.location.search);
       var roomID = params.get("room");
+      document.getElementById("textToCopy").value = roomID;
+
       var one = true;
       console.log("newONpage", one);
       var wsWattingRoom = new WebSocket(
@@ -30,7 +35,6 @@
       const userName = getCookie("auth_token");
       console.log(userName);
       wsWattingRoom.onmessage = function (event) {
-        
         var data = JSON.parse(event.data);
         console.log(data);
         if (data.event === "start") {
