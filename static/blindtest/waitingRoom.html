@@ -23,7 +23,7 @@
       var one = true;
       console.log("newONpage", one);
       var wsWattingRoom = new WebSocket(
-        "ws://10.70.6.24:8080/WaitingRoomForBlindTest/webs?room=" + roomID
+        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/WaitingRoomForBlindTest/webs?room=" + roomID
       );
       wsWattingRoom.onopen = function (event) {
         if (one) {
