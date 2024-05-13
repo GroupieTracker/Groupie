@@ -31,7 +31,6 @@
         }
     </style> -->
     <div id="timer" class="timer">Timer</div>
-    <div id="title" class="title">title</div>
     <div id="username" class="score">username</div>
 
     <input id="answer" type="text" />
@@ -50,6 +49,7 @@
       );
       ws.onopen = () => console.log("open ws");
       ws.onclose = () => console.log("close ws");
+      setInterval(startSending, 1000)
       ws.onmessage = function (event) {
         console.log(event);
         var data = JSON.parse(event.data);
@@ -69,8 +69,6 @@
         if (data.event == "timer") {
           var timer = document.getElementById("timer");
           timer.textContent = data.time;
-          var title = document.getElementById("title");
-          title.textContent = "Titre de la piste : " + data.title;
           var username = document.getElementById("username");
           username.textContent = data.username;
           checkAnswer(data.title);
