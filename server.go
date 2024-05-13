@@ -111,6 +111,23 @@ func ruleBlindtest(r *http.Request) (string, int, int, int) {
 	return "", -1, -1, -1
 }
 
+func ruleGuessTheSong(r *http.Request) (string, int, int, int, string) {
+	if r.Method == http.MethodPost {
+		err := r.ParseForm()
+		if err != nil {
+			fmt.Println(err)
+		}
+		name := r.FormValue("name")
+		nbPlayer, _ := strconv.Atoi(r.FormValue("nbPlayer"))
+		time, _ := strconv.Atoi(r.FormValue("time"))
+		round, _ := strconv.Atoi(r.FormValue("nbRound"))
+		dif := r.FormValue("difficulte")
+		return name, nbPlayer, time, round, dif
+
+	}
+	return "", -1, -1, -1, ""
+}
+
 func GoListBlindtest(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./static/blindtest/listeBlindtest.html")
 	if err != nil {
@@ -210,6 +227,7 @@ func main() {
 	var nbRoundBlindTest int
 	var username string
 	var category []string
+	
 	db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 	defer db.Close()
 	Groupi.ClearDatabase(db)
@@ -360,8 +378,9 @@ func main() {
 	http.HandleFunc("/RuleForGuessthesong", func(w http.ResponseWriter, r *http.Request) {
 		db, _ := sql.Open("sqlite3", "./Groupi/BDD.db")
 		defer db.Close()
-		nameRooms, nbPlayer, ti, nbRo := ruleBlindtest(r)
+		nameRooms, nbPlayer, ti, nbRo, diff := ruleGuessTheSong(r)
 		time = ti
+		dif = diff
 		nbRound = nbRo
 		newGame := Groupi.Game{
 			Name: "guessthesong",
