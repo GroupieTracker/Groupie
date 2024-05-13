@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	t "time"
 
 	websocket "github.com/gorilla/websocket"
 	"github.com/zmb3/spotify"
@@ -39,6 +40,7 @@ var conWin bool = false
 var myTime int
 var timerRunning bool
 var timerMutex sync.Mutex
+var timeFromdb int
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -63,9 +65,7 @@ func SpotifyMusic(room *Room) {
 }
 
 func sendMusic(room *Room, musicURL string) {
-	fmt.Print("ça envoie le paquet !")
 	ActMusic = musicURL
-	fmt.Println("musique envoyer:", musicURL)
 	musicData := struct {
 		Event string `json:"event"`
 		Music string `json:"music"`
@@ -143,9 +143,9 @@ func extractTrackID(spotifyLink string) string {
 	return trackID
 }
 
-func bouclTimerBT(room *Room) {
-	fmt.Println(len(room.Connections))
-	timeForRound := 10
+func bouclTimerBT(room *Room, nbRoundDB int) {
+	var nbRoundloop int
+	timeForRound := timeFromdb
 	for {
 		myTime = timeForRound
 		sendTimerBT(room, timeForRound)
@@ -158,14 +158,18 @@ func bouclTimerBT(room *Room) {
 			musicLock.Lock()
 			SpotifyMusic(room)
 			musicLock.Unlock()
-			timeForRound = 10
+			timeForRound = timeFromdb
+			nbRoundloop++
+			if nbRoundloop >= nbRoundDB {
+				conWin = true
+			}
 		}
 		TimerScore = timeForRound
 	}
+
 }
 
 func sendTimerBT(room *Room, time int) {
-	fmt.Println(playersInRoomStruct)
 	var title string
 	if Track != "" {
 		title = trackTitle
@@ -228,9 +232,8 @@ func orderByScore(players []Player) {
 }
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) {
-
+	timeFromdb = time
 	roomID := r.URL.Query().Get("room")
-	fmt.Println(roomID)
 	roomIDInt, err := strconv.Atoi(roomID)
 	if err != nil {
 		log.Println("Error converting room ID to int:", err)
@@ -278,16 +281,14 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 	if !timerRunning {
 		go func() {
 			timerRunning = true
-			bouclTimerBT(room)
+			bouclTimerBT(room, nbRound)
 			timerRunning = false
 		}()
 	}
 	timerMutex.Unlock()
 
-	fmt.Println(playerInRoom)
-
 	SpotifyMusic(room)
-
+	t.Sleep(1 * t.Second)
 	for {
 		_, mess, err := conn.ReadMessage()
 		if err != nil {
@@ -315,23 +316,18 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 		}
 		defer db.Close()
 		if dataGame.Event == "answer" {
-			fmt.Println("ouais ouais")
-			fmt.Println("la réponse de:", dataGame.Username, " est:", dataGame.Answer)
 			inputAnswer = dataGame.Answer
 			if strings.ToLower(inputAnswer) == strings.ToLower(trackTitle) {
 				for _, player := range playersInRoomStruct {
-					fmt.Println(player.Status)
 					if player.Status == true && player.Pseudo == dataGame.Username {
 						addScoreStruct(dataGame.Username, myTime)
 						updatePlayerScores(db, playersInRoomStruct, roomIDInt)
 					}
-					if player.Score == 100 {
-						fmt.Println("le Gagnant est:", player.Pseudo)
+					if player.Score == 10 {
 						conWin = true
 						return
 					}
 				}
-				fmt.Println("c'est le bon titre")
 			}
 		}
 

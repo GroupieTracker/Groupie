@@ -14,7 +14,7 @@
                 const roomCodeInput = document.getElementById('room-code');
                 const roomCode = roomCodeInput.value.trim();
                 if (roomCode.length > 0) {
-                    window.location.href = 'GuessTheSong?room=' + roomCode;
+                    window.location.href = 'WaitingRoomForGuessTheSong?room=' + roomCode;
                 } else {
                     alert("Entrer un numéro de room");
                 }
@@ -36,7 +36,7 @@
             <div class="room-title">Rooms</div>
             <div class="room-items">
                 {{range .}}
-                <a href="GuessTheSong?room={{index . 1}}" class="room">
+                <a href="WaitingRoomForGuessTheSong?room={{index . 1}}" class="room">
                     <div class="room-name">{{index . 0}}</div>
                 </a>
                 {{end}}

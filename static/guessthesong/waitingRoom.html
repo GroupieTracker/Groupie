@@ -23,7 +23,7 @@
       var one = true;
       console.log("newONpage", one);
       var wsWattingRoom = new WebSocket(
-        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/WaitingRoomForScattergories/webs?room=" + roomID
+        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/WsWaitingRoomGuessTheSong/webs?room=" + roomID
       );
       wsWattingRoom.onopen = function (event) {
         if (one) {
@@ -40,7 +40,7 @@
           wsWattingRoom.close();
           document.querySelector(".tolate").textContent =
             "La partie a été lancée";
-          window.location.href = "Scattergories?room=" + roomID;
+          window.location.href = "GuessTheSong?room=" + roomID;
         } else if (data.event == "waiting") {
           const wait = document.querySelector(".wait");
           document.querySelector(".nbPlayer").textContent = data.data[0];
