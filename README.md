@@ -70,7 +70,7 @@ Go on your IDE
 
 For vscode ```code . ```
 
-and replace all ```PLACE-YOUR-IP-OR-LOCALHOST-HERE```
+and replace all ```localhost```
 by your IP or you're localhost if you want run locally
 
 

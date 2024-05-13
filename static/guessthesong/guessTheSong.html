@@ -29,7 +29,7 @@
       var roomID = params.get("room");
       var roomID = params.get("room");
       var ws = new WebSocket(
-        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/GuessTheSong/webs?room=" + roomID
+        "ws://localhost:8080/GuessTheSong/webs?room=" + roomID
       );
       ws.onopen = () => console.log("open ws");
       ws.onclose = () => console.log("close ws");
@@ -61,7 +61,7 @@
           if (data.wincond == true) {
             localStorage.setItem('playersData', JSON.stringify(data.players));
             window.location.href =
-              "http://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/Winner/webs";
+              "http://localhost:8080/Winner/webs";
           }
         } else if (data.event == "music") {
           var lyricsDiv = document.getElementById("lyrics");

@@ -162,6 +162,8 @@ func bouclTimerBT(room *Room, nbRoundDB int) {
 			nbRoundloop++
 			if nbRoundloop >= nbRoundDB {
 				conWin = true
+				sendTimerBT(room, timeForRound)
+				return
 			}
 		}
 		TimerScore = timeForRound
