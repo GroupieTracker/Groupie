@@ -4,10 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blind Test</title>
-    <style></style>
+    <link rel="stylesheet" href="/static/css/style.css">
   </head>
-  <body>
-    <h2>Blind Test de ouf</h2>
+  <body>  
     <style>
       .correct {
         background-color: green;
@@ -29,7 +28,7 @@
       var roomID = params.get("room");
       var roomID = params.get("room");
       var ws = new WebSocket(
-        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/GuessTheSong/webs?room=" + roomID
+        "ws://localhost:8080/GuessTheSong/webs?room=" + roomID
       );
       ws.onopen = () => console.log("open ws");
       ws.onclose = () => console.log("close ws");
@@ -61,7 +60,7 @@
           if (data.wincond == true) {
             localStorage.setItem('playersData', JSON.stringify(data.players));
             window.location.href =
-              "http://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/Winner/webs";
+              "http://localhost:8080/Winner/webs";
           }
         } else if (data.event == "music") {
           var lyricsDiv = document.getElementById("lyrics");
