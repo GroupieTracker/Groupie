@@ -46,7 +46,7 @@
       var roomID = params.get("room");
       var roomID = params.get("room");
       var ws = new WebSocket(
-        "ws://10.70.6.24:8080/BlindTest/webs?room=" + roomID
+        "ws://localhost:8080/BlindTest/webs?room=" + roomID
       );
       ws.onopen = () => console.log("open ws");
       ws.onclose = () => console.log("close ws");
