@@ -78,17 +78,12 @@
           console.log(data.players);
           if (data.wincond == true) {
             window.location.href =
-              "http://10.70.5.231:8080/ListBlindtest/winner";
+              "http://localhost:8080/Winner/webs";
           }
         } else if (data.event == "music") {
           var spotifyIframe = document.getElementById("spotifyIframe");
           spotifyIframe.src = data.music;
           answer.value = "";
-        } else if (data.event == "userscore") {
-          var scorediv = document.getElementById("score");
-          scorediv.textContent = data.username;
-          console.log(data.username);
-          console.log("c'est good !");
         }
       };
 

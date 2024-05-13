@@ -39,6 +39,7 @@ var conWin bool = false
 var myTime int
 var timerRunning bool
 var timerMutex sync.Mutex
+var timeFromdb int
 
 func getRandomMusic() string {
 	loadSpotifyTracks("static/assets/tracks/spotify_tracks.json")
@@ -143,10 +144,13 @@ func extractTrackID(spotifyLink string) string {
 	return trackID
 }
 
-func bouclTimerBT(room *Room) {
+func bouclTimerBT(room *Room, nbRoundDB int) {
+	var nbRoundloop int
 	fmt.Println(len(room.Connections))
-	timeForRound := 10
+	timeForRound := timeFromdb
+	fmt.Println(nbRoundDB)
 	for {
+		fmt.Println(nbRoundloop)
 		myTime = timeForRound
 		sendTimerBT(room, timeForRound)
 		timeForRound = timeForRound - 1
@@ -158,14 +162,20 @@ func bouclTimerBT(room *Room) {
 			musicLock.Lock()
 			SpotifyMusic(room)
 			musicLock.Unlock()
-			timeForRound = 10
+			timeForRound = timeFromdb
+			nbRoundloop++
+			if nbRoundloop >= nbRoundDB {
+				fmt.Println("ouais ouais ")
+				conWin = true
+			}
 		}
 		TimerScore = timeForRound
 	}
+
 }
 
 func sendTimerBT(room *Room, time int) {
-	fmt.Println(playersInRoomStruct)
+	fmt.Println(playersInRoomStruct, " conWin est : ", conWin)
 	var title string
 	if Track != "" {
 		title = trackTitle
@@ -229,6 +239,8 @@ func orderByScore(players []Player) {
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) {
 
+	fmt.Println("le temps est:", time, " le nbRound est: ", nbRound)
+	timeFromdb = time
 	roomID := r.URL.Query().Get("room")
 	fmt.Println(roomID)
 	roomIDInt, err := strconv.Atoi(roomID)
@@ -278,7 +290,7 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 	if !timerRunning {
 		go func() {
 			timerRunning = true
-			bouclTimerBT(room)
+			bouclTimerBT(room, nbRound)
 			timerRunning = false
 		}()
 	}
@@ -325,7 +337,7 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 						addScoreStruct(dataGame.Username, myTime)
 						updatePlayerScores(db, playersInRoomStruct, roomIDInt)
 					}
-					if player.Score == 100 {
+					if player.Score == 10 {
 						fmt.Println("le Gagnant est:", player.Pseudo)
 						conWin = true
 						return

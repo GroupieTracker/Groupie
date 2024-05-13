@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loby</title>
+  </head>
+  <body>
+    <div class="tolate"></div>
+    <section class="waitingRoom">
+      <span>Nb de player </span><span class="nbPlayer"></span><span> sur </span
+      ><span class="maxPlayer"></span><span> max</span>
+      <div class="wait"></div>
+      <span>Copier le code pour le partagé : </span> <input id="textToCopy" readonly />
+    </section>
+    <script>
+
+
+      var params = new URLSearchParams(window.location.search);
+      var roomID = params.get("room");
+      document.getElementById("textToCopy").value = roomID;
+
+      var one = true;
+      console.log("newONpage", one);
+      var wsWattingRoom = new WebSocket(
+        "ws://localhost:8080/WsWaitingRoomGuessTheSong/webs?room=" + roomID
+      );
+      wsWattingRoom.onopen = function (event) {
+        if (one) {
+          newPlayer(userName);
+          one = false;
+        }
+      };
+      const userName = getCookie("auth_token");
+      console.log(userName);
+      wsWattingRoom.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        console.log(data);
+        if (data.event === "start") {
+          wsWattingRoom.close();
+          document.querySelector(".tolate").textContent =
+            "La partie a été lancée";
+          window.location.href = "GuessTheSong?room=" + roomID;
+        } else if (data.event == "waiting") {
+          const wait = document.querySelector(".wait");
+          document.querySelector(".nbPlayer").textContent = data.data[0];
+          document.querySelector(".maxPlayer").textContent = data.data[1];
+          if (userName == data.data[2]) {
+            while (wait.firstChild) {
+              wait.removeChild(wait.firstChild);
+            }
+            const start = document.createElement("button");
+            start.textContent = "lancer la partie";
+            start.addEventListener("click", () => {
+              const dataToSend = {
+                Event: "start",
+                Data: [],
+              };
+              if (wsWattingRoom.readyState === WebSocket.OPEN) {
+                wsWattingRoom.send(JSON.stringify(dataToSend));
+              } else {
+                console.error("WebSocket is not open.");
+              }
+            });
+            wait.appendChild(start);
+          }
+        }
+      };
+
+      function getCookie() {
+        var cookies = document.cookie.split("; ");
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].split("=");
+          var name = cookie[0].trim();
+          if (name === "auth_token") {
+            var value = cookie[1].replace(/^"|"$/g, "");
+            return value;
+          }
+        }
+        return null;
+      }
+
+      function newPlayer(userName) {
+        console.log("newPLayer");
+        const dataToSend = {
+          Event: "newPlayer",
+          Data: [userName],
+        };
+        if (wsWattingRoom.readyState == WebSocket.OPEN) {
+          wsWattingRoom.send(JSON.stringify(dataToSend));
+        } else {
+          console.error("WebSocket is not open.");
+        }
+      }
+    </script>
+  </body>
+</html>
