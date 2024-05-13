@@ -454,6 +454,6 @@ func main() {
 	fsTracks := http.FileServer(http.Dir("static/assets/tracks"))
 	http.Handle("/static/assets/tracks/", http.StripPrefix("/static/assets/tracks/", fsTracks))
 
-	fmt.Println("http://localhost:8080/")
+	fmt.Println("http://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
