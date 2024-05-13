@@ -28,7 +28,7 @@
       const game = document.querySelector(".game");
       var roomID = params.get("room");
       var ws = new WebSocket(
-        "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/Scattergories/webs?room=" + roomID
+        "ws://localhost:8080/Scattergories/webs?room=" + roomID
       );
       const userName = getCookie("auth_token");
       ws.onmessage = function (event) {
