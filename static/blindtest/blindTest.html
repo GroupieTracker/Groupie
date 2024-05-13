@@ -7,7 +7,7 @@
     <style></style>
   </head>
   <body>
-    <h2>Blind Test de ouf</h2>
+    <h2>Blind Test !</h2>
     <style>
       .correct {
         background-color: green;
@@ -31,11 +31,9 @@
         }
     </style> -->
     <div id="timer" class="timer">Timer</div>
-    <div id="title" class="title">title</div>
-    <div id="username" class="score">username</div>
+
 
     <input id="answer" type="text" />
-    <button onclick="startSending()">Start Sending</button>
 
     <h1>Scoreboard :</h1>
     <ul id="players-list"></ul>
@@ -46,7 +44,7 @@
       var roomID = params.get("room");
       var roomID = params.get("room");
       var ws = new WebSocket(
-        "ws://10.70.6.24:8080/BlindTest/webs?room=" + roomID
+        "ws://localhost:8080/BlindTest/webs?room=" + roomID
       );
       ws.onopen = () => console.log("open ws");
       ws.onclose = () => console.log("close ws");
@@ -78,17 +76,12 @@
           console.log(data.players);
           if (data.wincond == true) {
             window.location.href =
-              "http://10.70.5.231:8080/ListBlindtest/winner";
+              "http://localhost:8080/Winner/webs";
           }
         } else if (data.event == "music") {
           var spotifyIframe = document.getElementById("spotifyIframe");
           spotifyIframe.src = data.music;
           answer.value = "";
-        } else if (data.event == "userscore") {
-          var scorediv = document.getElementById("score");
-          scorediv.textContent = data.username;
-          console.log(data.username);
-          console.log("c'est good !");
         }
       };
 

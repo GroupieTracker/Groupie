@@ -1,41 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <form action="/lobby" method="post">
-        <h1>home</h1>
-        <input type="submit">
-    </form>
-        <input type="text" id="messageInput" placeholder="Entrez votre message">
-        <button onclick="sendMessage()">Envoyer</button>
-        <h1>Guess th song</h1>
-        <ul id="messageList"></ul>
-    
-        <script>
-             var params = new URLSearchParams(window.location.search);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blind Test</title>
+    <style></style>
+  </head>
+  <body>
+    <h2>Guess The Song !</h2>
+    <style>
+      .correct {
+        background-color: green;
+      }
+    </style>
+
+    <div id="lyrics" class="lyrics" style="white-space: pre-line;">Paroles de la chanson :</div>
+    <div id="timer" class="timer">Timer</div>
+
+    <input id="answer" type="text" />
+
+    <h1>Scoreboard :</h1>
+    <ul id="players-list"></ul>
+
+    <script>
+      var usernameID;
+      var params = new URLSearchParams(window.location.search);
+      var roomID = params.get("room");
       var roomID = params.get("room");
       var ws = new WebSocket(
-        "ws://10.70.6.24:8080/GuessTheSong/webs?room=" + roomID
+        "ws://localhost:8080/GuessTheSong/webs?room=" + roomID
       );
+      ws.onopen = () => console.log("open ws");
+      ws.onclose = () => console.log("close ws");
+      setInterval(startSending, 1000)
+      ws.onmessage = function (event) {
+        console.log(event);
+        var data = JSON.parse(event.data);
+        console.log(data);
+        var authToken = document.cookie.replace(
+          /(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/,
+          "$1"
+        );
+
+        if (authToken) {
+          usernameID = authToken;
+          console.log("La valeur du cookie auth_token est :", authToken);
+        } else {
+          console.log("Le cookie auth_token n'existe pas ou est vide.");
+        }
+
+        if (data.event == "timer") {
+          var timer = document.getElementById("timer");
+          timer.textContent = data.time;
+          var title = document.getElementById("title");
+          title.textContent = "Titre de la piste : " + data.title;
+          var username = document.getElementById("username");
+          username.textContent = data.username;
+          checkAnswer(data.title);
+          displayPlayers(data.players);
+          console.log(data.players);
+          if (data.wincond == true) {
+            localStorage.setItem('playersData', JSON.stringify(data.players));
+            window.location.href =
+              "http://localhost:8080/Winner/webs";
+          }
+        } else if (data.event == "music") {
+          var lyricsDiv = document.getElementById("lyrics");
+    lyricsDiv.innerHTML = data.lyrics; 
     
-            ws.onmessage = function(event) {
-                var messageList = document.getElementById("messageList");
-                var li = document.createElement("li");
-                li.textContent = event.data;
-                messageList.appendChild(li);
-            };
-    
-            function sendMessage() {
-                var messageInput = document.getElementById("messageInput"); 
-                var message = messageInput.value;
-                ws.send(message);
-                messageInput.value = "";
-            }
-        </script>
-    </body>
-    </html>
-    
+    answer.value = "";
+        } else if (data.event == "userscore") {
+          var scorediv = document.getElementById("score");
+          scorediv.textContent = data.username;
+          console.log(data.username);
+          console.log("c'est good !");
+        }
+      };
+
+      function startSending() {
+        var authToken = document.cookie.replace(
+          /(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/,
+          "$1"
+        );
+
+        if (authToken) {
+          console.log("La valeur du cookie auth_token est :", authToken);
+        } else {
+          console.log("Le cookie auth_token n'existe pas ou est vide.");
+          return;
+        }
+
+        var inputText = document.getElementById("answer").value;
+        var usernameID = document.getElementById("username").value;
+        console.log("answer:", inputText, "       username:", authToken);
+
+        const dataToSend = {
+          Event: "answer",
+          Answer: inputText,
+          Username: authToken,
+        };
+
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(dataToSend));
+        } else {
+          console.error("WebSocket is not open.");
+        }
+      }
+
+      function checkAnswer(title) {
+        var answerInput = document.getElementById("answer");
+        var answerValue = answerInput.value.toLowerCase();
+        if (title.toLowerCase() === answerValue) {
+          answerInput.classList.add("correct");
+        } else {
+          answerInput.classList.remove("correct");
+        }
+      }
+
+      function collectAndSendValues() {
+        var answerInput = document.getElementById("answer");
+        var answerValue = answerInput.value;
+
+        const dataToSend = {
+          event: "answer",
+          answer: answerValue,
+        };
+
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(dataToSend));
+        } else {
+          console.error("WebSocket is not open.");
+        }
+      }
+
+      function displayPlayers(players) {
+        const playersList = document.getElementById("players-list");
+        playersList.innerHTML = "";
+        players.forEach(function (player) {
+          const listItem = document.createElement("li");
+          listItem.textContent = `${player.Pseudo}: ${player.Score}`;
+          playersList.appendChild(listItem);
+        });
+      }
+    </script>
+  </body>
+</html>
