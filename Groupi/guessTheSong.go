@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	t "time"
 
 	websocket "github.com/gorilla/websocket"
 	"github.com/zmb3/spotify"
@@ -171,8 +172,6 @@ func getLyrics() string {
 
 	trackTitleGTS = selectedSong.Title
 
-	fmt.Println("Artiste: ", selectedSong.Artist, " Nom de la musique: ", selectedSong.Title)
-
 	url := fmt.Sprintf("https://api.lyrics.ovh/v1/%s/%s", selectedSong.Artist, selectedSong.Title)
 	response, err := http.Get(url)
 	if err != nil {
@@ -276,11 +275,8 @@ func extractTrackIDGTS(spotifyLink string) string {
 
 func bouclTimerGTS(room *Room, nbRoundDB int) {
 	var nbRoundloop int
-	fmt.Println(len(room.Connections))
 	timeForRound := timeFromdbGTS
-	fmt.Println(nbRoundDB)
 	for {
-		fmt.Println(nbRoundloop)
 		myTimeGTS = timeForRound
 		sendTimerBTGTS(room, timeForRound)
 		timeForRound = timeForRound - 1
@@ -304,7 +300,7 @@ func bouclTimerGTS(room *Room, nbRoundDB int) {
 }
 
 func sendTimerBTGTS(room *Room, time int) {
-	//fmt.Println(playersInRoomStructGTS, " conWinGTS est : ", conWinGTS)
+
 	var title string
 	if TrackGTS != "" {
 		title = trackTitleGTS
@@ -356,10 +352,8 @@ func orderByScoreGTS(players []Player) {
 
 func WsGuessTheSong(w http.ResponseWriter, r *http.Request, time int, nbRound int, dif string) {
 
-	fmt.Println("le temps est:", time, " le nbRound est: ", nbRound)
 	timeFromdbGTS = time
 	roomID := r.URL.Query().Get("room")
-	fmt.Println(roomID)
 	roomIDInt, err := strconv.Atoi(roomID)
 	if err != nil {
 		log.Println("Error converting room ID to int:", err)
@@ -383,6 +377,7 @@ func WsGuessTheSong(w http.ResponseWriter, r *http.Request, time int, nbRound in
 	userNameGTS := cookie.Value
 
 	newPlayer := false
+	t.Sleep(1 * t.Second)
 	for _, name := range playerInRoomGTS {
 		if userNameGTS == name {
 			newPlayer = true
@@ -413,8 +408,6 @@ func WsGuessTheSong(w http.ResponseWriter, r *http.Request, time int, nbRound in
 	}
 	timerMutexGTS.Unlock()
 
-	fmt.Println(playerInRoomGTS)
-
 	SpotifyMusicGTS(room)
 
 	for {
@@ -435,8 +428,6 @@ func WsGuessTheSong(w http.ResponseWriter, r *http.Request, time int, nbRound in
 			return
 		}
 
-		fmt.Println(dataGame)
-
 		addPlayerGTS(dataGame.Username)
 		db, err := sql.Open("sqlite3", "./Groupi/BDD.db")
 		if err != nil {
@@ -444,23 +435,19 @@ func WsGuessTheSong(w http.ResponseWriter, r *http.Request, time int, nbRound in
 		}
 		defer db.Close()
 		if dataGame.Event == "answer" {
-			fmt.Println("ouais ouais")
-			fmt.Println("la réponse de:", dataGame.Username, " est:", dataGame.Answer)
 			inputAnswerGTS = dataGame.Answer
 			if strings.ToLower(inputAnswerGTS) == strings.ToLower(trackTitleGTS) {
 				for _, player := range playersInRoomStructGTS {
-					fmt.Println(player.Status)
 					if player.Status == true && player.Pseudo == dataGame.Username {
 						addScoreStructGTS(dataGame.Username, myTimeGTS)
 						updatePlayerScores(db, playersInRoomStructGTS, roomIDInt)
 					}
 					if player.Score == 10 {
-						fmt.Println("le Gagnant est:", player.Pseudo)
+
 						conWinGTS = true
 						return
 					}
 				}
-				fmt.Println("c'est le bon titre")
 			}
 		}
 

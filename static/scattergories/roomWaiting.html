@@ -23,7 +23,6 @@
       var one = true;
       console.log("newONpage", one);
       var wsWattingRoom = new WebSocket(
-        // "ws://localhost:8080/WaitingRoomForScattergories/webs?room=" + roomID
         "ws://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/WaitingRoomForScattergories/webs?room=" + roomID
       );
       wsWattingRoom.onopen = function (event) {

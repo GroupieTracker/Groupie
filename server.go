@@ -254,7 +254,7 @@ func main() {
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/lobby", Lobby)
 	http.HandleFunc("/GuessTheSong/webs", func(w http.ResponseWriter, r *http.Request) {
-
+		fmt.Println("dif : ", dif)
 		Groupi.WsGuessTheSong(w, r, time, nbRound, dif)
 	})
 	http.HandleFunc("/LobBlindtest", GoLobBlindtest)
@@ -312,9 +312,6 @@ func main() {
 		roomIDInt, _ := strconv.Atoi(roomID)
 		userID, _ := Groupi.GetUserIDByUsername(db, username)
 		Groupi.AddRoomUser(db, roomIDInt, userID)
-		fmt.Println(roomIDInt, userID)
-		usersIDs, _ := Groupi.GetUsersInRoom(db, roomID)
-		fmt.Println(usersIDs)
 		Groupi.WsScattergories(w, r, time, nbRound)
 	})
 
@@ -457,6 +454,6 @@ func main() {
 	fsTracks := http.FileServer(http.Dir("static/assets/tracks"))
 	http.Handle("/static/assets/tracks/", http.StripPrefix("/static/assets/tracks/", fsTracks))
 
-	fmt.Println("http://localhost:8080/")
+	fmt.Println("http://PLACE-YOUR-IP-OR-LOCALHOST-HERE:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

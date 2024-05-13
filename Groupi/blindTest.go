@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	t "time"
 
 	websocket "github.com/gorilla/websocket"
 	"github.com/zmb3/spotify"
@@ -64,9 +65,7 @@ func SpotifyMusic(room *Room) {
 }
 
 func sendMusic(room *Room, musicURL string) {
-	fmt.Print("ça envoie le paquet !")
 	ActMusic = musicURL
-	fmt.Println("musique envoyer:", musicURL)
 	musicData := struct {
 		Event string `json:"event"`
 		Music string `json:"music"`
@@ -146,11 +145,8 @@ func extractTrackID(spotifyLink string) string {
 
 func bouclTimerBT(room *Room, nbRoundDB int) {
 	var nbRoundloop int
-	fmt.Println(len(room.Connections))
 	timeForRound := timeFromdb
-	fmt.Println(nbRoundDB)
 	for {
-		fmt.Println(nbRoundloop)
 		myTime = timeForRound
 		sendTimerBT(room, timeForRound)
 		timeForRound = timeForRound - 1
@@ -165,7 +161,6 @@ func bouclTimerBT(room *Room, nbRoundDB int) {
 			timeForRound = timeFromdb
 			nbRoundloop++
 			if nbRoundloop >= nbRoundDB {
-				fmt.Println("ouais ouais ")
 				conWin = true
 			}
 		}
@@ -175,7 +170,6 @@ func bouclTimerBT(room *Room, nbRoundDB int) {
 }
 
 func sendTimerBT(room *Room, time int) {
-	fmt.Println(playersInRoomStruct, " conWin est : ", conWin)
 	var title string
 	if Track != "" {
 		title = trackTitle
@@ -238,11 +232,8 @@ func orderByScore(players []Player) {
 }
 
 func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) {
-
-	fmt.Println("le temps est:", time, " le nbRound est: ", nbRound)
 	timeFromdb = time
 	roomID := r.URL.Query().Get("room")
-	fmt.Println(roomID)
 	roomIDInt, err := strconv.Atoi(roomID)
 	if err != nil {
 		log.Println("Error converting room ID to int:", err)
@@ -296,10 +287,8 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 	}
 	timerMutex.Unlock()
 
-	fmt.Println(playerInRoom)
-
 	SpotifyMusic(room)
-
+	t.Sleep(1 * t.Second)
 	for {
 		_, mess, err := conn.ReadMessage()
 		if err != nil {
@@ -327,23 +316,18 @@ func WsBlindTest(w http.ResponseWriter, r *http.Request, time int, nbRound int) 
 		}
 		defer db.Close()
 		if dataGame.Event == "answer" {
-			fmt.Println("ouais ouais")
-			fmt.Println("la réponse de:", dataGame.Username, " est:", dataGame.Answer)
 			inputAnswer = dataGame.Answer
 			if strings.ToLower(inputAnswer) == strings.ToLower(trackTitle) {
 				for _, player := range playersInRoomStruct {
-					fmt.Println(player.Status)
 					if player.Status == true && player.Pseudo == dataGame.Username {
 						addScoreStruct(dataGame.Username, myTime)
 						updatePlayerScores(db, playersInRoomStruct, roomIDInt)
 					}
 					if player.Score == 10 {
-						fmt.Println("le Gagnant est:", player.Pseudo)
 						conWin = true
 						return
 					}
 				}
-				fmt.Println("c'est le bon titre")
 			}
 		}
 
