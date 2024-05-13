@@ -136,7 +136,6 @@ func getLyrics() string {
 		{"Muddy Waters", "Rollin' Stone"},
 		{"The Byrds", "Mr. Tambourine Man"},
 		{"R.E.M.", "Losing My Religion"},
-		{"Frank Ocean", "Thinkin Bout You"},
 		{"Lou Reed", "Walk on the Wild Side"},
 		{"The Shirelles", "Will You Love Me Tomorrow"},
 		{"Talking Heads", "Once in a Lifetime"},

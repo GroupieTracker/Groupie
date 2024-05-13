@@ -7,7 +7,7 @@
     <style></style>
   </head>
   <body>
-    <h2>Guess The Song !</h2>
+    <h2>Blind Test de ouf</h2>
     <style>
       .correct {
         background-color: green;
@@ -16,6 +16,7 @@
 
     <div id="lyrics" class="lyrics" style="white-space: pre-line;">Paroles de la chanson :</div>
     <div id="timer" class="timer">Timer</div>
+    <div id="username" class="score">username</div>
 
     <input id="answer" type="text" />
 
@@ -53,8 +54,6 @@
           var timer = document.getElementById("timer");
           timer.textContent = data.time;
           var title = document.getElementById("title");
-          title.textContent = "Titre de la piste : " + data.title;
-          var username = document.getElementById("username");
           username.textContent = data.username;
           checkAnswer(data.title);
           displayPlayers(data.players);
